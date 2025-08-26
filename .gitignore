@@ -1,2 +1,2 @@
-vivado_project/
+vivado_project/*
 !vivado_project/create-project.tcl
