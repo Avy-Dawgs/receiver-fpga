@@ -30,8 +30,7 @@ serializer
 (
   .clk(clk), 
   .rst(rst), 
-  .baud_clk_rising_edge(baud_clk_rising_edge), 
-  .baud_clk_falling_edge(baud_clk_falling_edge), 
+  .baud_clk_rising_edge_i(baud_clk_rising_edge), 
   .fifo_empty_i(fifo_empty), 
   .fifo_rd_data_i(fifo_rd_data),
   .fifo_rd_en_o(fifo_rd_en),
@@ -62,7 +61,7 @@ baud_clk_gen
 (
   .clk(clk), 
   .rst(rst), 
-  .gen_clk(baud_clk),
+  .gen_clk(baud_clk)
 );
 
 // baud clock edge detector

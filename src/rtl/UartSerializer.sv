@@ -5,19 +5,16 @@ module UartSerializer
 (
   input clk, 
   input rst, 
-  input baud_clk_rising_edge,
-  input baud_clk_falling_edge, 
+  input baud_clk_rising_edge_i,
   input fifo_empty_i, 
   input [7:0] fifo_rd_data_i,
-  output fifo_rd_en_o,
+  output reg fifo_rd_en_o,
   output logic tx_o
 ); 
 
   reg [2:0] bit_count;
   reg [7:0] shift_reg;
   reg shift_reg_rd_en;
-
-  logic baud_clk_edge;
 
   /*
   * STATE MACHINE
@@ -83,10 +80,10 @@ module UartSerializer
     endcase
   end
 
-  assign start_transition = baud_clk_falling_edge & (~fifo_empty_i);
-  assign start_to_transmit_transition = baud_clk_rising_edge;
-  assign transmit_to_stop_transition = baud_clk_rising_edge & (bit_count == 'd7);
-  assign stop_to_idle_transition = baud_clk_falling_edge;
+  assign start_transition = baud_clk_rising_edge_i & (~fifo_empty_i);
+  assign start_to_transmit_transition = baud_clk_rising_edge_i;
+  assign transmit_to_stop_transition = baud_clk_rising_edge_i & (bit_count == 'd7);
+  assign stop_to_idle_transition = baud_clk_rising_edge_i;
 
   /*
   * SEQUENTIAL 
@@ -99,7 +96,7 @@ module UartSerializer
     else begin 
       case (state) 
         TRANSMIT: begin 
-          if (baud_clk_edge) begin 
+          if (baud_clk_rising_edge_i) begin 
             bit_count <= bit_count + 1'd1;
           end
         end
@@ -131,11 +128,32 @@ module UartSerializer
           end
         end
         TRANSMIT: begin
-          if (baud_clk_edge) begin 
-            shift_reg <= shift_reg >> 1;
+          if (baud_clk_rising_edge_i) begin 
+            shift_reg <= shift_reg >> 1'd1;
           end
         end
         default begin 
+        end
+      endcase
+    end
+  end
+
+  always_ff @(posedge clk, posedge rst) begin 
+    if (rst) begin 
+      fifo_rd_en_o <= 1'h0;
+    end
+    else begin 
+      case (state) 
+        IDLE, STOP: begin 
+          if (start_transition) begin 
+            fifo_rd_en_o <= 1'h1;
+          end
+          else begin 
+            fifo_rd_en_o <= 1'h0;
+          end
+        end
+        default: begin 
+          fifo_rd_en_o <= 1'h0;
         end
       endcase
     end
@@ -158,8 +176,5 @@ module UartSerializer
       end
     endcase
   end
-
-  assign baud_clk_edge = baud_clk_rising_edge | baud_clk_falling_edge;
-  assign fifo_rd_en_o = start_transition;
 
 endmodule
