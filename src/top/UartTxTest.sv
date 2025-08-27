@@ -13,6 +13,8 @@ module UartTxTest
 
   logic [7:0] tx_data; 
   logic wr_en; 
+  wire fifo_full; 
+  wire fifo_empty;
 
   assign tx_data = 8'h45;
   assign wr_en = 1'h1;
@@ -31,7 +33,9 @@ module UartTxTest
     .rst(rst), 
     .data_i(tx_data), 
     .wr_en_i(wr_en), 
-    .tx_o(uart_tx)
+    .tx_o(uart_tx), 
+    .fifo_full_o(fifo_full), 
+    .fifo_empty_o(fifo_empty)
   );
 
 endmodule
