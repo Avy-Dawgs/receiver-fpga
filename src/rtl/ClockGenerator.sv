@@ -9,7 +9,7 @@ module ClockGenerator
 (
   input clk, 
   input rst, 
-  output reg gen_clk
+  output reg gen_clk_o
 );
   
   localparam MAX_COUNT = $rtoi((real'(CLK_FREQ) / real'(TARGET_CLK_FREQ)) / 2.0) - 1;
