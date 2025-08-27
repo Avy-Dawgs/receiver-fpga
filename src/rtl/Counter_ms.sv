@@ -9,14 +9,16 @@ module Counter_ms
 (
   input clk, 
   input rst,
+  input clr_i,
   output reg [$clog2(MAX_COUNT) - 1:0] count_o
 ); 
 
   wire ms_en;
 
+  logic en_gen_rst;
 
   always_ff @(posedge clk, posedge rst) begin 
-    if (rst) begin 
+    if (rst || clr_i) begin 
       count_o <= 'd0;
     end
     else begin 
@@ -30,6 +32,9 @@ module Counter_ms
       end
     end
   end
+
+
+  assign en_gen_rst = clr_i | rst;
   
 
   EnableGenerator 
@@ -40,7 +45,7 @@ module Counter_ms
   ms_en_gen
   (
     .clk(clk), 
-    .rst(rst), 
+    .rst(en_gen_rst), 
     .en_o(ms_en)
   );
 

@@ -9,14 +9,16 @@ module Counter_us
 (
   input clk, 
   input rst,
+  input clr_i,
   output reg [$clog2(MAX_COUNT) - 1:0] count_o
 ); 
 
   wire us_en;
 
+  logic en_gen_rst;
 
   always_ff @(posedge clk, posedge rst) begin 
-    if (rst) begin 
+    if (rst || clr_i) begin 
       count_o <= 'd0;
     end
     else begin 
@@ -32,15 +34,18 @@ module Counter_us
   end
   
 
+  assign en_gen_rst = clr_i | rst;
+
+
   EnableGenerator 
   #(
     .CLK_FREQ(CLK_FREQ), 
     .EN_FREQ(1_000_000)
   )
-  ms_en_gen
+  us_en_gen
   (
     .clk(clk), 
-    .rst(rst), 
+    .rst(en_gen_rst), 
     .en_o(us_en)
   );
 
