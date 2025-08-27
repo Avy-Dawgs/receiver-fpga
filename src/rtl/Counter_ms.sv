@@ -1,5 +1,5 @@
 /*
-* Counts microseconds
+* Counts milliseconds
 */
 module Counter_ms
 #(
