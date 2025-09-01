@@ -4,22 +4,24 @@
 module QuarterSineLut 
 #(
   ADDR_BITS, 
-  DW
+  FRAC_BITS
 )
 (
   input clk, 
   input rst, 
   input [ADDR_BITS - 1:0] addr_i, 
-  output reg [DW - 1:0] sample_o
+  output reg [FRAC_BITS:0] sample_o
 ); 
 
   localparam real PI = 3.1415926535;
+
+  localparam SIZE = 2**ADDR_BITS;
 
   reg [DW - 1:0] lut [0:2**ADDR_BITS - 1];
 
   initial begin 
     for (int i = 0; i < SIZE; i++) begin 
-      lut[i] = $rtoi($sin(2 * PI * i / (4 * SIZE)) * 2**(DW - 1));
+      lut[i] = $rtoi($sin(2 * PI * i / (4 * SIZE)) * 2**FRAC_BITS);
     end
   end
 
