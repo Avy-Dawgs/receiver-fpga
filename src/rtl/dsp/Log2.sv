@@ -33,7 +33,7 @@ module Log2
 
   reg [FRAC_BITS - 1:0] log2_mantissa_lut [0:2**FRAC_BITS - 1];
   initial begin 
-    for (int i = 0; i < 256; i++) begin 
+    for (int i = 0; i < 2**FRAC_BITS; i++) begin 
       log2_mantissa_lut[i] = $rtoi($log10(1.0 + real'(i)/2.0**FRAC_BITS)/$log10(2) * 2.0**FRAC_BITS);
     end
   end
