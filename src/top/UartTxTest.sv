@@ -10,6 +10,7 @@ module UartTxTest
 
   localparam CLK_FREQ = 125_000_000;
   localparam BAUD = 115_200;
+  localparam FIFO_ADDR_BITS = 2;
 
   logic [7:0] tx_data; 
   logic wr_en; 
@@ -25,7 +26,8 @@ module UartTxTest
   UartTx 
   #(
     .CLK_FREQ(CLK_FREQ), 
-    .BAUD(BAUD)
+    .BAUD(BAUD), 
+    .FIFO_ADDR_BITS(FIFO_ADDR_BITS)
   )
   uart
   (

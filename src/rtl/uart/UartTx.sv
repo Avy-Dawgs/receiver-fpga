@@ -1,10 +1,13 @@
 /*
-* Transmit only UART.
+* Transmit only UART. 
+*
+* Self generates baud clock via clock division.
 */
 module UartTx
 #(
   CLK_FREQ, 
-  BAUD = 115_200
+  BAUD = 115_200, 
+  FIFO_ADDR_BITS = 3
 )
 (
   input clk, 
@@ -16,7 +19,9 @@ module UartTx
   output fifo_empty_o
 );
 
-  wire [7:0] fifo_rd_data;
+  localparam DW = 8;
+
+  wire [DW - 1:0] fifo_rd_data;
   logic fifo_rd_en;
 
   wire baud_en;
@@ -38,7 +43,11 @@ module UartTx
   );
 
   // fifo 
-  Fifo #(.DW(8), .SIZE_POW2(3)) 
+  Fifo 
+  #(
+    .DW(DW), 
+    .SIZE_POW2(FIFO_ADDR_BITS)
+  ) 
   tx_fifo 
   (
     .clk(clk), 
@@ -53,7 +62,7 @@ module UartTx
 
   // baud clock generator 
   EnableGenerator 
-#(
+  #(
     .CLK_FREQ(CLK_FREQ), 
     .EN_FREQ(BAUD)
   )
