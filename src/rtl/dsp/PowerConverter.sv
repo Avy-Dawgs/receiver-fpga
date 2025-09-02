@@ -14,10 +14,10 @@ module PowerConverter
   output reg valid_o
   ); 
 
-  localparam MAX_POWER_DB = 72; 
+  localparam MAX_POWER_DB = 72;
 
   wire [15:0] dB;
-  reg dB_reg;
+  reg [15:0] dB_reg;
   wire dB_valid;
   reg dB_reg_valid;
 
