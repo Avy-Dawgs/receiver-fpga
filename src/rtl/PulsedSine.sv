@@ -14,13 +14,24 @@ module PulsedSine
   input clk, 
   input rst, 
   output [DW - 1:0] data_o, 
-  output reg valid_o
+  output valid_o
 ); 
 
   localparam LUT_ADDR_BITS = 8;
+  localparam LUT_FRAC_BITS = DW - 1;
+
+  localparam LUT_SIZE = 2**LUT_ADDR_BITS;
+
+  localparam ADDR_FRAC_BITS = 4;
+
+  localparam SAMPLES_PER_PERIOD = $rtoi(SAMP_RATE / FREQ);
+  localparam INC_PER_SAMPLE = $rtoi(LUT_SIZE / SAMPLES_PER_PERIOD * 2**ADDR_FRAC_BITS);
+
+  reg [LUT_ADDR_BITS + ADDR_FRAC_BITS - 1:0] lut_addr_ext;
+  logic lut_addr;
 
   wire sample_en;
-  wire lut_sample;
+  wire [DW - 1:0] lut_sample;
 
   wire [$clog2(PRI_MS) - 1:0] count;
 
@@ -78,10 +89,12 @@ module PulsedSine
 
   always_ff @(posedge clk, posedge rst) begin 
     if (rst) begin 
-      
+      lut_addr_ext <= 'h0;
     end
     else begin 
-      
+      if (sample_en) begin 
+        lut_addr_ext <= lut_addr_ext + INC_PER_SAMPLE;
+      end
     end
   end
 
@@ -90,6 +103,10 @@ module PulsedSine
   */
 
   assign data_o = (state == ON) ? lut_sample : 'h0;
+
+  assign valid_o = sample_en;
+
+  assign lut_addr = lut_addr_ext >> ADDR_FRAC_BITS;
 
   /*
   * MODULES
@@ -111,13 +128,13 @@ module PulsedSine
   SineLut 
   #(
     .ADDR_BITS(LUT_ADDR_BITS), 
-    .DW(DW)
+    .FRAC_BITS(LUT_FRAC_BITS)
   ) 
   sine_lut
   (
     .clk(clk), 
     .rst(rst), 
-    .addr_i(), 
+    .addr_i(lut_addr), 
     .sample_o(lut_sample)
   );
 
