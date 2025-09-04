@@ -24,11 +24,11 @@ module PulsedSine
 
   localparam ADDR_FRAC_BITS = 4;
 
-  localparam SAMPLES_PER_PERIOD = $rtoi(SAMP_RATE / FREQ);
-  localparam INC_PER_SAMPLE = $rtoi(LUT_SIZE / SAMPLES_PER_PERIOD * 2**ADDR_FRAC_BITS);
+  localparam real SAMPLES_PER_PERIOD = SAMP_RATE / FREQ;
+  localparam INC_PER_SAMPLE = $rtoi(real'(LUT_SIZE) / SAMPLES_PER_PERIOD * 2.0**ADDR_FRAC_BITS);
 
   reg [LUT_ADDR_BITS + ADDR_FRAC_BITS - 1:0] lut_addr_ext;
-  logic lut_addr;
+  logic [LUT_ADDR_BITS - 1:0] lut_addr;
 
   wire sample_en;
   wire [DW - 1:0] lut_sample;
@@ -116,7 +116,7 @@ module PulsedSine
   EnableGenerator
   #(
     .CLK_FREQ(CLK_FREQ), 
-    .EN_FREQ(FREQ)
+    .EN_FREQ(SAMP_RATE)
   ) 
   sample_en_gen
   (

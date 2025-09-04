@@ -15,7 +15,7 @@ module PowerToDB
 
   localparam COEFF_FRAC_BITS = 20;
 
-  localparam RECIP_LOG2_10 = $rtoi(1.0/($log(10.0)/$log(2.0)) * 2.0**COEFF_FRAC_BITS);
+  localparam RECIP_LOG2_10 = $rtoi(1.0/($log10(10.0)/$log10(2.0)) * 2.0**COEFF_FRAC_BITS);
 
   wire [12:0] log2; 
   reg [12:0] log2_reg;
@@ -42,7 +42,7 @@ module PowerToDB
     else begin 
       log2_reg <= log2;
       log10_reg <= log10; 
-      dB_o <= 10 * log10;
+      dB_o <= 10 * log10_reg;
     end
   end
 
@@ -62,11 +62,13 @@ module PowerToDB
   assign log10_acc = log2_reg * RECIP_LOG2_10;
   assign log10 = log10_acc >> COEFF_FRAC_BITS;
 
-  Log2 #(
+  Log2 
+  #(
     .DW(32), 
     .FRAC_BITS(8)
   )
-  log2 (
+  log2_mod 
+  (
     .clk(clk), 
     .rst(rst), 
     .valid_i(valid_i), 

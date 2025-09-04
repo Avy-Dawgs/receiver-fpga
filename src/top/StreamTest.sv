@@ -28,7 +28,7 @@ module StreamTest
   wire uart_fifo_full; 
   wire uart_fifo_empty;
   wire uart_wr_en;
-  logic uart_data;
+  logic [7:0] uart_data;
 
   logic [15:0] goertzel_input;
   wire [31:0] goertzel_power;
@@ -43,6 +43,8 @@ module StreamTest
   assign goertzel_input = {{16-DW{1'h0}}, source_data};
 
   assign uart_data = dB_power[7:0];
+
+  assign uart_wr_en = dB_power_valid;
 
   // pulsed sine
   PulsedSine
@@ -78,7 +80,7 @@ module StreamTest
     .data_i(goertzel_input), 
     .valid_i(source_valid), 
     .done_o(goertzel_done), 
-    .power_o(goertzel_power), 
+    .power_o(goertzel_power)
   );
 
   // dB conversion 
