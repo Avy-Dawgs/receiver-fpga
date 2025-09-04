@@ -69,15 +69,16 @@ module GoertzelPower
   * STATE MACHINE
   */
 
-  typedef enum bit[1:0] {
+  typedef enum bit[2:0] {
     IDLE,     // wait for start
     FILTER,   // filtering stream
     IM_RE_CALC, // calculate IM and RE components
+    IM_RE_SQ,   // square IM and RE
     POW_CALC  // calculate power
   } states_t;
 
-  reg [1:0] state;
-  logic [1:0] next_state;
+  reg [2:0] state;
+  logic [2:0] next_state;
 
   always_ff @(posedge clk or posedge rst) begin 
     if (rst) begin 
@@ -106,6 +107,8 @@ module GoertzelPower
           next_state = FILTER; 
         end
       IM_RE_CALC: 
+        next_state = IM_RE_SQ;
+      IM_RE_SQ: 
         next_state = POW_CALC;
       POW_CALC:
         next_state = IDLE;
@@ -162,8 +165,12 @@ module GoertzelPower
           re_reg <= re_noscale >>> (FRAC_BITS + SCALE_SHIFT);
           im_reg <= im_noscale >>> (FRAC_BITS + SCALE_SHIFT);
         end
+        IM_RE_SQ: begin 
+          im_reg <= im_reg[15:0]*im_reg[15:0];
+          re_reg <= re_reg[15:0]*re_reg[15:0];
+        end
         POW_CALC: begin 
-          power_o <= im_reg*im_reg + re_reg*re_reg;
+          power_o <= im_reg + re_reg;
           done_o <= 1'h1;
         end
         default: ;

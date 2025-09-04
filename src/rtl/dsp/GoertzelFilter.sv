@@ -17,7 +17,7 @@ module GoertzelFilter
 );
 
   reg signed [15:0] data_i_reg;
-  reg signed [31:0] mult_res_reg;
+  reg signed [15 + COEFF_BITS:0] mult_res_reg;
 
   function automatic signed [31:0] mult_coeff;
     input signed [31:0] a, b;
@@ -25,7 +25,7 @@ module GoertzelFilter
     logic signed [63:0] acc;
     begin 
       acc = a * b;
-      return acc[31 + COEFF_BITS:COEFF_BITS];
+      return acc >>> COEFF_BITS;
     end
   endfunction
 
