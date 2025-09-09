@@ -1,31 +1,50 @@
 /*
-* Goertzel Filter.
+* Goertzel Filter. 
+* 
+* Automatically scales.
 */
 module GoertzelFilter 
 #(
   signed COEFF,
-  int COEFF_BITS
+  int COEFF_BITS,
+  DW,
+  BLOCK_SIZE_POW2,
+  SCALE_BLOCK_SIZE_POW2
 ) 
 (
   input clk, 
   input rst, 
-  input clr,
-  input signed [15:0] data_i, 
-  input valid_i, 
+  input clr_i,    // clear filter state
+  input signed [DW - 1:0] data_i,   
+  input valid_i,        
   output reg valid_o,
-  output reg signed [31:0] s0, s1
+  output reg [BLOCK_SIZE_POW2 - 1:0] count_o,   // sample count
+  output signed [DW - 1:0] s0_o, s1_o
 );
+  
+  localparam SCALE_COUNT = 2**SCALE_BLOCK_SIZE_POW2 - 1;
+  localparam SCALE_SHIFT = SCALE_BLOCK_SIZE_POW2 - 1;
 
-  reg signed [15:0] data_i_reg;
-  reg signed [15 + COEFF_BITS:0] mult_res_reg;
+  localparam COEFF_FRAC_BITS = COEFF_BITS - 2;
 
-  function automatic signed [31:0] mult_coeff;
-    input signed [31:0] a, b;
+  // data width is the input data width plus
+  localparam INTERNAL_DW = DW + SCALE_BLOCK_SIZE_POW2 + 1;
 
-    logic signed [63:0] acc;
+  reg signed [INTERNAL_DW - 1:0] s0_internal, s1_internal;
+
+  reg signed [DW - 1:0] data_i_reg;
+  reg signed [INTERNAL_DW - 1:0] coeff_product;
+
+  /*
+  * Multiply by the coefficient.
+  */
+  function automatic signed [INTERNAL_DW - 1:0] mult_coeff;
+    input signed [INTERNAL_DW - 1:0] a;
+
+    logic signed [INTERNAL_DW + COEFF_BITS - 1:0] acc;
     begin 
-      acc = a * b;
-      return acc >>> COEFF_BITS;
+      acc = a * COEFF;
+      return acc[INTERNAL_DW + COEFF_FRAC_BITS - 1:COEFF_FRAC_BITS];
     end
   endfunction
 
@@ -33,17 +52,22 @@ module GoertzelFilter
   * STATE MACHINE
   */
 
-  typedef enum 
+  typedef enum bit [1:0]
   {
-    IDLE, 
-    COMP 
+    IDLE,   // waiting for sample
+    UPDATE, // update filter state (have sample)
+    SCALE   // scale down internal values
   } states_t;
 
-  reg state; 
-  logic next_state;
+  logic idle_to_update_transition; 
+  logic update_to_scale_transition; 
+  logic filter_updated;
+
+  reg [1:0] state; 
+  logic [1:0] next_state;
 
   always_ff @(posedge clk or posedge rst) begin 
-    if (rst || clr) begin 
+    if (rst || clr_i) begin 
       state <= IDLE;
     end 
     else begin 
@@ -53,16 +77,40 @@ module GoertzelFilter
 
   always_comb begin 
     case (state) 
-      IDLE: 
-        if (valid_i) begin 
-          next_state = COMP; 
+      IDLE: begin
+        next_state = IDLE; 
+        if (idle_to_update_transition) begin 
+          next_state = UPDATE; 
         end 
-        else begin 
-          next_state = IDLE; 
+      end
+      UPDATE: begin 
+        next_state = IDLE; 
+        if (update_to_scale_transition) begin 
+          next_state = SCALE; 
         end
-      default:
+      end
+      SCALE: begin 
         next_state = IDLE;
+      end
+      default: begin
+        next_state = IDLE;
+      end
     endcase
+  end
+
+  assign idle_to_update_transition = valid_i;
+  assign update_to_scale_transition = (count_o[SCALE_BLOCK_SIZE_POW2 - 1:0] == SCALE_COUNT);
+  assign filter_updated = ((state == UPDATE) || (state == SCALE)) && (next_state == IDLE);
+
+  always_ff @(posedge clk, posedge rst) begin 
+    if (rst || clr_i) begin 
+      count_o <= 'h0;
+    end
+    else begin 
+      if (filter_updated) begin
+        count_o <= count_o + 1'h1;
+      end
+    end
   end
 
   /*
@@ -70,11 +118,11 @@ module GoertzelFilter
   */
 
   always_ff @(posedge clk or posedge rst) begin 
-    if (rst || clr) begin 
+    if (rst || clr_i) begin 
       data_i_reg <= 'h0;
-      mult_res_reg <= 'h0;
-      s0 <= 'h0;
-      s1 <= 'h0;
+      coeff_product <= 'h0;
+      s0_internal <= 'h0;
+      s1_internal <= 'h0;
       valid_o <= 1'h0;
     end 
     else begin 
@@ -84,18 +132,30 @@ module GoertzelFilter
           // register input, multiplication result
           if (valid_i) begin 
             data_i_reg <= data_i;
-            mult_res_reg <= mult_coeff(s0, COEFF); 
+            coeff_product <= mult_coeff(s0_internal); 
           end
         end
-        COMP: begin 
+        UPDATE: begin 
           // perform filter update, (register outputs)
-          s0 <= {{16{data_i_reg[15]}}, data_i_reg} + mult_res_reg - s1;
-          s1 <= s0;
+          s0_internal <= {{INTERNAL_DW - DW{data_i_reg[DW - 1]}}, data_i_reg} + coeff_product - s1_internal;
+          s1_internal <= s0_internal;
+
+          // output is valid if scale doesn't need to happen
+          if (!update_to_scale_transition) begin
+            valid_o <= 1'h1;
+          end
+        end
+        SCALE: begin 
+          s0_internal <= s0_internal >>> SCALE_SHIFT; 
+          s1_internal <= s1_internal >>> SCALE_SHIFT;
           valid_o <= 1'h1;
         end
         default: ;
       endcase
     end
   end
+
+  assign s0_o = s0_internal[DW - 1:0];
+  assign s1_o = s1_internal[DW - 1:0];
 
 endmodule

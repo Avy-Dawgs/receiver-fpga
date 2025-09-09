@@ -6,18 +6,19 @@
 module GoertzelPower 
 #(
   real FREQ, 
-  int SIZE, 
+  int SIZE_POW2, 
   real SAMP_RATE, 
-  int FRAC_BITS
+  int FRAC_BITS, 
+  DW
 ) 
 (
   input clk,
   input rst,
   input start_i,
-  input signed [15:0] data_i, 
+  input signed [DW - 1:0] data_i, 
   input valid_i, 
   output reg done_o,
-  output reg [31:0] power_o
+  output reg [DW * 2 - 1:0] power_o
 ); 
 
   /*
@@ -25,26 +26,31 @@ module GoertzelPower
   */
 
   localparam COEFF_BITS = 24;
+  localparam SCALE_BLOCK_SIZE_POW2 = 10;
+
+  localparam MAX_COUNT = 2**SIZE_POW2 - 1;
 
   localparam real PI = 3.141592653589763;
 
-  localparam SCALE_SHIFT = $clog2(SIZE/2);
-  localparam real OMEGA = 2 * PI * $floor(0.5 + SIZE * FREQ / SAMP_RATE) / SIZE;
-  localparam signed [31:0] SINE = $rtoi($sin(OMEGA) * 2**COEFF_BITS); 
-  localparam signed [31:0] COSINE = $rtoi($cos(OMEGA) * 2**COEFF_BITS);
-  localparam signed [31:0] COEFF = 2 * COSINE;
+  localparam COEFF_FRAC_BITS = COEFF_BITS - 2;
+
+  localparam real SIZE = 2**SIZE_POW2;
+  localparam real OMEGA = 2.0 * PI * $floor(0.5 + real'(SIZE) * FREQ / SAMP_RATE) / real'(SIZE);
+  localparam signed [COEFF_BITS - 1:0] SINE = $rtoi($sin(OMEGA) * 2.0**(COEFF_FRAC_BITS)); 
+  localparam signed [COEFF_BITS - 1:0] COSINE = $rtoi($cos(OMEGA) * 2.0**(COEFF_FRAC_BITS));
+  localparam signed [COEFF_BITS - 1:0] COEFF = 2 * COSINE;
 
   /*
   * REGISTERS / WIRES 
   */
 
-  reg [$clog2(SIZE) - 1:0] count;
+  wire [SIZE_POW2 - 1:0] filter_count;
 
-  reg signed [31:0] s0_reg, s1_reg;
-  wire signed [31:0] filter_s0, filter_s1;
+  reg signed [DW - 1:0] s0_im, s1_re;
+  wire signed [DW - 1:0] filter_s0, filter_s1;
 
-  reg signed [31:0] im_reg, re_reg;
-  logic signed [31:0] im_noscale, re_noscale;
+  reg signed [DW*2 - 1:0] im_sq, re_sq;
+  logic signed [DW - 1:0] im_noscale, re_noscale;
 
   wire filter_valid; 
   logic clr_filter;
@@ -55,13 +61,14 @@ module GoertzelPower
   * FUNCTIONS
   */
 
-  function automatic signed [31:0] mult_coeff;
-    input signed [31:0] a, b;
+  function automatic signed [DW - 1:0] mult_coeff;
+    input signed [DW - 1:0] a; 
+    input signed [COEFF_BITS - 1:0] coeff;
 
-    logic signed [63:0] acc;
+    logic signed [DW + COEFF_BITS - 1:0] acc;
     begin 
-      acc = a * b;
-      return acc[31 + COEFF_BITS:COEFF_BITS];
+      acc = a * coeff;
+      return acc[DW + COEFF_FRAC_BITS - 1:COEFF_FRAC_BITS];
     end
   endfunction
 
@@ -92,20 +99,18 @@ module GoertzelPower
   // next state
   always_comb begin 
     case (state) 
-      IDLE: 
+      IDLE: begin
+        next_state = IDLE;
         if (start_i) begin 
           next_state = FILTER;
         end
-        else begin 
-          next_state = IDLE;
-        end
-      FILTER: 
+      end
+      FILTER: begin
+        next_state = FILTER;
         if (last_sample_ready) begin 
           next_state = IM_RE_CALC; 
         end
-        else begin 
-          next_state = FILTER; 
-        end
+      end
       IM_RE_CALC: 
         next_state = IM_RE_SQ;
       IM_RE_SQ: 
@@ -121,56 +126,39 @@ module GoertzelPower
   * SEQUENTIAL
   */
 
-  // count samples output from filter
-  always_ff @(posedge clk or posedge rst) begin 
-    if (rst) begin 
-      count <= 'h0;
-    end
-    else begin 
-      case (state) 
-        FILTER: 
-          if (filter_valid) begin 
-            count <= count + 1'h1;
-          end
-        default: 
-          count <= 'h0;
-      endcase
-    end
-  end
-
   // power calc logic
   always_ff @(posedge clk or posedge rst) begin 
     if (rst) begin 
-      s0_reg <= 'h0;
-      s1_reg <= 'h0;
-      re_reg <= 'h0;
-      im_reg <= 'h0;
+      s0_im <= 'h0;
+      s1_re <= 'h0;
+      re_sq <= 'h0;
+      im_sq <= 'h0;
       power_o <= 'h0;
       done_o <= 1'h0;
     end
     else begin 
       case (state) 
         IDLE: begin 
-          s0_reg <= 'h0;
-          s1_reg <= 'h0;
+          s0_im <= 'h0;
+          s1_re <= 'h0;
           done_o <= 1'h0;
         end
         FILTER: 
           // sample filter registers when last sample is ready
           if (last_sample_ready) begin 
-            s0_reg <= filter_s0;
-            s1_reg <= filter_s1;
+            s0_im <= filter_s0;
+            s1_re <= filter_s1;
           end
-        IM_RE_CALC: begin 
-          re_reg <= re_noscale >>> (FRAC_BITS + SCALE_SHIFT);
-          im_reg <= im_noscale >>> (FRAC_BITS + SCALE_SHIFT);
+        IM_RE_CALC: begin
+          s0_im <= im_noscale >>> FRAC_BITS;
+          s1_re <= re_noscale >>> FRAC_BITS;
         end
         IM_RE_SQ: begin 
-          im_reg <= im_reg[15:0]*im_reg[15:0];
-          re_reg <= re_reg[15:0]*re_reg[15:0];
+          im_sq <= s0_im * s0_im;
+          re_sq <= s1_re * s1_re;
         end
         POW_CALC: begin 
-          power_o <= im_reg + re_reg;
+          power_o <= im_sq + re_sq;
           done_o <= 1'h1;
         end
         default: ;
@@ -182,11 +170,11 @@ module GoertzelPower
   * COMBINATIONAL 
   */
 
-  assign last_sample_ready = (count == (SIZE - 1)) && filter_valid;
+  assign last_sample_ready = (filter_count == MAX_COUNT) && filter_valid;
   assign clr_filter = (state != FILTER);
 
-  assign re_noscale = mult_coeff(s0_reg, COSINE) - s1_reg;
-  assign im_noscale = mult_coeff(s0_reg, SINE);
+  assign re_noscale = mult_coeff(s0_im, COSINE) - s1_re;
+  assign im_noscale = mult_coeff(s0_im, SINE);
 
   /*
   * MODULES 
@@ -195,18 +183,22 @@ module GoertzelPower
   GoertzelFilter 
   #(
     .COEFF(COEFF), 
-    .COEFF_BITS(COEFF_BITS)
+    .COEFF_BITS(COEFF_BITS), 
+    .DW(DW), 
+    .BLOCK_SIZE_POW2(SIZE_POW2), 
+    .SCALE_BLOCK_SIZE_POW2(SCALE_BLOCK_SIZE_POW2)
   ) 
   filter 
   (
     .clk(clk), 
     .rst(rst), 
-    .clr(clr_filter), 
+    .clr_i(clr_filter), 
     .data_i(data_i), 
     .valid_i(valid_i), 
     .valid_o(filter_valid), 
-    .s0(filter_s0), 
-    .s1(filter_s1)
+    .count_o(filter_count),
+    .s0_o(filter_s0), 
+    .s1_o(filter_s1)
   );
 
 endmodule

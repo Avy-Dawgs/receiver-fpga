@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="0.000000000 ms"></ZoomStartTime>
-      <ZoomEndTime time="151.000000001 ms"></ZoomEndTime>
-      <Cursor1Time time="7.209050000 ms"></Cursor1Time>
+      <ZoomStartTime time="9,613.291 ns"></ZoomStartTime>
+      <ZoomEndTime time="10,366.292 ns"></ZoomEndTime>
+      <Cursor1Time time="9,881.291 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="182"></NameColumnWidth>
-      <ValueColumnWidth column_width="88"></ValueColumnWidth>
+      <ValueColumnWidth column_width="76"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="5" />
+   <WVObjectSize size="11" />
    <wvobject type="logic" fp_name="/tb_GoertzelPower/clk">
       <obj_property name="ElementShortName">clk</obj_property>
       <obj_property name="ObjectShortName">clk</obj_property>
@@ -45,5 +45,39 @@
    <wvobject type="array" fp_name="/tb_GoertzelPower/power">
       <obj_property name="ElementShortName">power[31:0]</obj_property>
       <obj_property name="ObjectShortName">power[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_GoertzelPower/goertzel/filter/s0_internal">
+      <obj_property name="ElementShortName">s0_internal[26:0]</obj_property>
+      <obj_property name="ObjectShortName">s0_internal[26:0]</obj_property>
+      <obj_property name="Radix">REALRADIX</obj_property>
+      <obj_property name="radix_realType">SIGNEDFIXEDPOINTRADIX</obj_property>
+      <obj_property name="radix_fractionWidth">4</obj_property>
+      <obj_property name="radix_otherWidth">0</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_GoertzelPower/goertzel/filter/s1_internal">
+      <obj_property name="ElementShortName">s1_internal[26:0]</obj_property>
+      <obj_property name="ObjectShortName">s1_internal[26:0]</obj_property>
+      <obj_property name="Radix">REALRADIX</obj_property>
+      <obj_property name="radix_realType">SIGNEDFIXEDPOINTRADIX</obj_property>
+      <obj_property name="radix_fractionWidth">4</obj_property>
+      <obj_property name="radix_otherWidth">0</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_GoertzelPower/goertzel/filter/update_to_scale_transition">
+      <obj_property name="ElementShortName">update_to_scale_transition</obj_property>
+      <obj_property name="ObjectShortName">update_to_scale_transition</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_GoertzelPower/goertzel/filter_count">
+      <obj_property name="ElementShortName">filter_count[15:0]</obj_property>
+      <obj_property name="ObjectShortName">filter_count[15:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/tb_GoertzelPower/power_dB">
+      <obj_property name="ElementShortName">power_dB</obj_property>
+      <obj_property name="ObjectShortName">power_dB</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_GoertzelPower/valid_i">
+      <obj_property name="ElementShortName">valid_i</obj_property>
+      <obj_property name="ObjectShortName">valid_i</obj_property>
    </wvobject>
 </wave_config>

@@ -62,9 +62,10 @@ module tb_GoertzelPower();
   GoertzelPower 
   #(
     .FREQ(457_000), 
-    .SIZE(2**16),
+    .SIZE_POW2(16),
     .SAMP_RATE(10_000_000), 
-    .FRAC_BITS(FRAC_BITS)
+    .FRAC_BITS(FRAC_BITS), 
+    .DW(16)
   ) 
   goertzel 
   (
