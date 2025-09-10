@@ -25,8 +25,10 @@ module GoertzelPower
   * PARAMETERS 
   */
 
+  localparam INTERNAL_DW = DW + 2;
+
   localparam COEFF_BITS = 24;
-  localparam SCALE_BLOCK_SIZE_POW2 = 10;
+  localparam SCALE_BLOCK_SIZE_POW2 = 8;
 
   localparam MAX_COUNT = 2**SIZE_POW2 - 1;
 
@@ -46,11 +48,11 @@ module GoertzelPower
 
   wire [SIZE_POW2 - 1:0] filter_count;
 
-  reg signed [DW - 1:0] s0_im, s1_re;
-  wire signed [DW - 1:0] filter_s0, filter_s1;
+  reg signed [INTERNAL_DW - 1:0] s0_im, s1_re;
+  wire signed [INTERNAL_DW - 1:0] filter_s0, filter_s1;
 
-  reg signed [DW*2 - 1:0] im_sq, re_sq;
-  logic signed [DW - 1:0] im_noscale, re_noscale;
+  reg signed [INTERNAL_DW*2 - 1:0] im_sq, re_sq;
+  logic signed [INTERNAL_DW - 1:0] im_noscale, re_noscale;
 
   wire filter_valid; 
   logic clr_filter;
@@ -61,14 +63,14 @@ module GoertzelPower
   * FUNCTIONS
   */
 
-  function automatic signed [DW - 1:0] mult_coeff;
-    input signed [DW - 1:0] a; 
+  function automatic signed [INTERNAL_DW - 1:0] mult_coeff;
+    input signed [INTERNAL_DW - 1:0] a; 
     input signed [COEFF_BITS - 1:0] coeff;
 
-    logic signed [DW + COEFF_BITS - 1:0] acc;
+    logic signed [INTERNAL_DW + COEFF_BITS - 1:0] acc;
     begin 
       acc = a * coeff;
-      return acc[DW + COEFF_FRAC_BITS - 1:COEFF_FRAC_BITS];
+      return acc[INTERNAL_DW + COEFF_FRAC_BITS - 1:COEFF_FRAC_BITS];
     end
   endfunction
 

@@ -14,8 +14,9 @@ module StreamTest
   localparam PW_MS = 70; 
   localparam PRI_MS = 1000; 
   localparam DW = 12;
-  localparam GOERTZEL_SIZE = 2**16;
+  localparam GOERTZEL_SIZE_POW2 = 16;
   localparam GOERTZEL_FRAC_BITS = 4;
+  localparam GOERTZEL_DW = 16;
   localparam UART_BAUD = 115_200;
 
   wire rst;
@@ -24,14 +25,14 @@ module StreamTest
   wire source_valid;
 
   // uart connections 
+  logic [7:0] uart_data;
   wire uart_tx;
   wire uart_fifo_full; 
   wire uart_fifo_empty;
   wire uart_wr_en;
-  logic [7:0] uart_data;
 
-  logic [15:0] goertzel_input;
-  wire [31:0] goertzel_power;
+  logic signed [GOERTZEL_DW - 1:0] goertzel_input;
+  wire [GOERTZEL_DW*2 - 1:0] goertzel_power;
   wire goertzel_done; 
 
   wire [15:0] dB_power; 
@@ -40,9 +41,9 @@ module StreamTest
   assign rst = btn[0];
   assign ck_io13 = uart_tx;
 
-  assign goertzel_input = {{16-DW{1'h0}}, source_data};
+  assign goertzel_input = {source_data, 4'h0};
 
-  assign uart_data = dB_power[7:0];
+  assign uart_data = dB_power[15:8];
 
   assign uart_wr_en = dB_power_valid;
 
@@ -68,9 +69,10 @@ module StreamTest
   GoertzelPower
   #(
     .FREQ(FREQ), 
-    .SIZE(GOERTZEL_SIZE), 
+    .SIZE_POW2(GOERTZEL_SIZE_POW2), 
     .SAMP_RATE(SAMP_RATE), 
-    .FRAC_BITS(GOERTZEL_FRAC_BITS)
+    .FRAC_BITS(GOERTZEL_FRAC_BITS), 
+    .DW(GOERTZEL_DW)
   ) 
   GoertzelPower
   (
@@ -107,7 +109,7 @@ module StreamTest
   (
     .clk(clk), 
     .rst(rst), 
-    .data_i(dB_power), 
+    .data_i(uart_data), 
     .wr_en_i(uart_wr_en), 
     .tx_o(uart_tx), 
     .fifo_full_o(uart_fifo_full), 

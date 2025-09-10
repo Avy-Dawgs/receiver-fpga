@@ -4,6 +4,7 @@
 module tb_GoertzelPower(); 
 
   localparam FRAC_BITS = 4;
+  localparam DW = 16;
 
   localparam real PI = 3.141592653589763;
 
@@ -12,7 +13,7 @@ module tb_GoertzelPower();
   reg clk; 
   reg rst;
   reg start;
-  reg signed [15:0] data; 
+  reg signed [DW - 1:0] data; 
   reg valid_i; 
   wire done; 
   wire [31:0] power;
@@ -50,7 +51,7 @@ module tb_GoertzelPower();
     #CLK_PERIOD;
 
     forever #9 begin 
-      data = $rtoi(1000 * $cos(2 * PI * 457_000 * t)) << FRAC_BITS;
+      data = $rtoi(2047 * $cos(2 * PI * 457_000 * t)) << FRAC_BITS;
       valid_i = 1;
       #CLK_PERIOD; 
       valid_i = 0;
@@ -65,7 +66,7 @@ module tb_GoertzelPower();
     .SIZE_POW2(16),
     .SAMP_RATE(10_000_000), 
     .FRAC_BITS(FRAC_BITS), 
-    .DW(16)
+    .DW(DW)
   ) 
   goertzel 
   (

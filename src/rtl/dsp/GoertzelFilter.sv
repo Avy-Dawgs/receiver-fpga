@@ -19,8 +19,10 @@ module GoertzelFilter
   input valid_i,        
   output reg valid_o,
   output reg [BLOCK_SIZE_POW2 - 1:0] count_o,   // sample count
-  output signed [DW - 1:0] s0_o, s1_o
+  output signed [DW + 2 - 1:0] s0_o, s1_o
 );
+
+  localparam OUTPUT_DW = DW + 2;
   
   localparam SCALE_COUNT = 2**SCALE_BLOCK_SIZE_POW2 - 1;
   localparam SCALE_SHIFT = SCALE_BLOCK_SIZE_POW2 - 1;
@@ -61,7 +63,6 @@ module GoertzelFilter
 
   logic idle_to_update_transition; 
   logic update_to_scale_transition; 
-  logic filter_updated;
 
   reg [1:0] state; 
   logic [1:0] next_state;
@@ -100,14 +101,13 @@ module GoertzelFilter
 
   assign idle_to_update_transition = valid_i;
   assign update_to_scale_transition = (count_o[SCALE_BLOCK_SIZE_POW2 - 1:0] == SCALE_COUNT);
-  assign filter_updated = ((state == UPDATE) || (state == SCALE)) && (next_state == IDLE);
 
   always_ff @(posedge clk, posedge rst) begin 
     if (rst || clr_i) begin 
       count_o <= 'h0;
     end
     else begin 
-      if (filter_updated) begin
+      if (valid_o) begin
         count_o <= count_o + 1'h1;
       end
     end
@@ -155,7 +155,7 @@ module GoertzelFilter
     end
   end
 
-  assign s0_o = s0_internal[DW - 1:0];
-  assign s1_o = s1_internal[DW - 1:0];
+  assign s0_o = s0_internal[OUTPUT_DW - 1:0];
+  assign s1_o = s1_internal[OUTPUT_DW - 1:0];
 
 endmodule
