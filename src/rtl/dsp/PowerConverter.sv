@@ -14,13 +14,19 @@ module PowerConverter
   output reg valid_o
   ); 
 
-  localparam MAX_POWER_DB = 72;
+  localparam signed MAX_POWER_DB = 72;
 
   wire [15:0] dB;
   reg [15:0] dB_reg;
   wire dB_valid;
   reg dB_reg_valid;
 
+  // steps: 
+  //  - PowerToDB registers input
+  //  - wait for dB conversion and register result
+  //  - calculate dBFS and register output
+
+  // calculation registers
   always_ff @(posedge clk or posedge rst) begin 
     if (rst) begin 
       dB_reg <= 'h0;
@@ -32,6 +38,7 @@ module PowerConverter
     end
   end
 
+  // valid registers
   always_ff @(posedge clk or posedge rst) begin
     if (rst) begin 
       dB_reg_valid <= 1'h0;
@@ -43,10 +50,6 @@ module PowerConverter
     end
   end
   
-  // steps: 
-  //  - PowerToDB registers input
-  //  - wait for dB conversion and register result
-  //  - calculate dBFS and register output
   
   PowerToDB power_to_dB(
     .clk(clk), 
