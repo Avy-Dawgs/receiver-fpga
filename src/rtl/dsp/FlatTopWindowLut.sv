@@ -62,10 +62,12 @@ module FlatTopWindowLut
     
     // second half
     if (n_i[SIZE_POW2 - 1]) begin 
+      // addr is direct from input addr 
       half_lut_addr = n_i[SIZE_POW2 - 2:0];
     end
     // first half
     else begin 
+      // addr is halfsize minus input addr
       half_lut_addr = (HALFSIZE - 1) - n_i[SIZE_POW2 - 2:0];
     end
   end
