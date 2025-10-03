@@ -33,6 +33,7 @@ module PowerToDB
 //  - multiply result by 1/log2(10) 
 //  - multiply result by 10 and register output
 
+  // calculation registers
   always_ff @(posedge clk or posedge rst) begin 
     if (rst) begin 
       log2_reg <= 'h0;
@@ -46,6 +47,7 @@ module PowerToDB
     end
   end
 
+  // valid registers
   always_ff @(posedge clk or posedge rst) begin 
     if (rst) begin 
       log2_reg_valid <= 'h0;
@@ -59,7 +61,9 @@ module PowerToDB
     end
   end
 
+  // multiplication by the reciprical (with accumulation)
   assign log10_acc = log2_reg * RECIP_LOG2_10;
+  // final log10 value calculation
   assign log10 = log10_acc >> COEFF_FRAC_BITS;
 
   Log2 
@@ -67,7 +71,7 @@ module PowerToDB
     .DW(32), 
     .FRAC_BITS(8)
   )
-  log2_mod 
+  log2_inst
   (
     .clk(clk), 
     .rst(rst), 
