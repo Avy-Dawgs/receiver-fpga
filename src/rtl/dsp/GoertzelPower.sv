@@ -28,8 +28,10 @@ module GoertzelPower
   localparam INTERNAL_DW = DW + 2;
 
   localparam COEFF_BITS = 24;
+  // scale block size for filter
   localparam SCALE_BLOCK_SIZE_POW2 = 8;
 
+  // block size
   localparam MAX_COUNT = 2**SIZE_POW2 - 1;
 
   localparam real PI = 3.141592653589763;
@@ -63,6 +65,9 @@ module GoertzelPower
   * FUNCTIONS
   */
 
+  /*
+  * Multiply by coefficient.
+  */
   function automatic signed [INTERNAL_DW - 1:0] mult_coeff;
     input signed [INTERNAL_DW - 1:0] a; 
     input signed [COEFF_BITS - 1:0] coeff;
@@ -89,6 +94,7 @@ module GoertzelPower
   reg [2:0] state;
   logic [2:0] next_state;
 
+  // state transition
   always_ff @(posedge clk or posedge rst) begin 
     if (rst) begin 
       state <= IDLE;
@@ -175,6 +181,7 @@ module GoertzelPower
   assign last_sample_ready = (filter_count == MAX_COUNT) && filter_valid;
   assign clr_filter = (state != FILTER);
 
+  // imaginary and real before scaling
   assign re_noscale = mult_coeff(s0_im, COSINE) - s1_re;
   assign im_noscale = mult_coeff(s0_im, SINE);
 

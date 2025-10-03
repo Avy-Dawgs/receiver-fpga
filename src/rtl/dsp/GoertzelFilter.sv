@@ -24,14 +24,18 @@ module GoertzelFilter
 
   localparam OUTPUT_DW = DW + 2;
   
+  // how many samples come in before scaling down
   localparam SCALE_COUNT = 2**SCALE_BLOCK_SIZE_POW2 - 1;
+  // how many bits to scale down by
   localparam SCALE_SHIFT = SCALE_BLOCK_SIZE_POW2 - 1;
 
   localparam COEFF_FRAC_BITS = COEFF_BITS - 2;
 
-  // data width is the input data width plus
+  // data width is the input data width plus the scale block size bits plus
+  // 1 bit padding
   localparam INTERNAL_DW = DW + SCALE_BLOCK_SIZE_POW2 + 1;
 
+  // internal filter state registers
   reg signed [INTERNAL_DW - 1:0] s0_internal, s1_internal;
 
   reg signed [DW - 1:0] data_i_reg;
@@ -67,6 +71,7 @@ module GoertzelFilter
   reg [1:0] state; 
   logic [1:0] next_state;
 
+  // state transition
   always_ff @(posedge clk or posedge rst) begin 
     if (rst || clr_i) begin 
       state <= IDLE;
@@ -76,6 +81,7 @@ module GoertzelFilter
     end
   end
 
+  // next state
   always_comb begin 
     case (state) 
       IDLE: begin
@@ -99,9 +105,11 @@ module GoertzelFilter
     endcase
   end
 
+  // state transitions
   assign idle_to_update_transition = valid_i;
   assign update_to_scale_transition = (count_o[SCALE_BLOCK_SIZE_POW2 - 1:0] == SCALE_COUNT);
 
+  // count register
   always_ff @(posedge clk, posedge rst) begin 
     if (rst || clr_i) begin 
       count_o <= 'h0;
