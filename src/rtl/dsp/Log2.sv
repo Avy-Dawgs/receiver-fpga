@@ -38,6 +38,7 @@ module Log2
     end
   end
 
+  // valid signal registers
   always_ff @(posedge clk or posedge rst) begin
     if (rst) begin 
       x_reg_valid <= 1'h0;
@@ -51,6 +52,7 @@ module Log2
     end
   end
 
+  // log calculation registers
   always_ff @(posedge clk or posedge rst) begin 
     if (rst) begin 
       x_reg <= 'h0; 
@@ -79,9 +81,13 @@ module Log2
     end
   end
 
+  // pad the input with 0s (for mantissa lut addr in edge case where shift is 0)
   assign x_reg_ext = {x_reg, {FRAC_BITS{1'h0}}};            
+  // shift input by the index of the leading one
   assign x_reg_ext_sh = x_reg_ext >> leading_one_idx;   
+  // extract mantissa from shifted input
   assign lin_mantissa = x_reg_ext_sh[FRAC_BITS - 1:0];
+  // look up factional component using mantissa as addr
   assign log2_mantissa = log2_mantissa_lut[lin_mantissa_reg];
 
 endmodule
