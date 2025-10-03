@@ -9,9 +9,14 @@ module Control
   input valid_i,
   output dc_block_en_o, 
   output goertzel_start_o, 
-  output hga_en_o,    // high gain amp enable (stage 1)
+  output hga_bypass_o,    // high gain amp enable (stage 1)
   output pga_gain_o   // TODO width
 ); 
+  
+  // how long to wait after changing HGA
+  localparam HGA_SET_SETTLE_TIME = 0;
+  // how long to wait after setting PGA
+  localparam PGA_SET_SETTLE_TIME = 0;
 
 
   /*
