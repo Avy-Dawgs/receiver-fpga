@@ -86,7 +86,8 @@ always_ff @(posedge clk, posedge rst) begin
   end
 end
 
-assign target_reached = (state == ACTIVE) && (target == count);
+assign active_o = (state == ACTIVE);
+assign target_reached = active_o && (target == count);
 assign done_o = target_reached;
 
 endmodule
