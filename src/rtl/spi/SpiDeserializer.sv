@@ -31,6 +31,6 @@ module SpiDeserializer #(
     end
   end
 
-  assign date_o = shiftreg;
+  assign data_o = shiftreg;
 
 endmodule
