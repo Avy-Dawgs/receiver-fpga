@@ -1,3 +1,8 @@
+/*
+* Clock domain crossing module for going from 
+* a fast clock domain to a slow one. 
+* Only works for relatively slow data streams.
+*/
 module Fast2SlowCdc #(
   DW
 )
