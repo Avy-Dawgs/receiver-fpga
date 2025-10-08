@@ -1,3 +1,9 @@
+/*
+* Interface for controlling PGA. 
+* 
+* Set gain by using set_i. done_o signal goes high when SPI transfer is
+* complete.
+*/
 module PgaInterface #(
   CLK_FREQ
   ) (
@@ -118,7 +124,7 @@ SpiSerializer #(
 
 ClockGenerator #(
   .CLK_FREQ(CLK_FREQ), 
-  .SCK_FREQ(SCK_FREQ)
+  .TARGET_CLK_FREQ(SCK_FREQ)
   ) 
   sck_clock_generator (
     .clk(clk), 
