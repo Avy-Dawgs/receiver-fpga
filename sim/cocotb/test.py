@@ -24,7 +24,7 @@ async def pga_set(dut, afe):
     '''
     while True: 
         await ValueChange(dut.pga_gain) 
-        afe.pga.gain = dut.pga_gain()
+        afe.pga.gain = 10**(dut.pga_gain()/20)
 
 async def generate_signal(afe): 
     '''
@@ -49,7 +49,7 @@ async def read_data(dut):
 @cocotb.test()
 async def test_dut(dut): 
     '''
-
+    Test entry point.
     '''
 
     clk_freq = 125e6

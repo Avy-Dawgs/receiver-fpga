@@ -1,3 +1,7 @@
+'''
+Analog front end models.
+'''
+
 import cocotb 
 from cocotb.queue import Queue 
 from cocotb.triggers import Timer 
@@ -9,8 +13,8 @@ class HGA:
 
     def __init__(
             self, 
-            in_queue, 
-            out_queue
+            in_queue: Queue, 
+            out_queue: Queue
             ): 
         self.in_queue = in_queue 
         self.out_queue = out_queue 
@@ -43,9 +47,9 @@ class PGA:
 
     def __init__(
             self, 
-            init_gain, 
-            in_queue, 
-            out_queue
+            init_gain: float, 
+            in_queue: Queue, 
+            out_queue: Queue
             ): 
         self._gain = init_gain 
         self.in_queue = in_queue 
@@ -62,6 +66,9 @@ class PGA:
             self._gain = val
 
         async def run(self): 
+            '''
+            Run the model.
+            '''
             while True: 
                 in_val = await self.in_queue.get() 
                 self.out_queue.put(in_val * self._gain)
@@ -73,10 +80,10 @@ class ADC:
 
     def __init__(
             self, 
-            ref_V, 
-            bits, 
-            in_queue, 
-            out_queue
+            ref_V: float, 
+            bits: int, 
+            in_queue: Queue, 
+            out_queue: Queue
             ): 
         self.ref_V = ref_V 
         self.min_val = 0 
@@ -87,6 +94,9 @@ class ADC:
         cocotb.start_soon(self.run()) 
 
         async def run(self) -> None: 
+            '''
+            Run the model.
+            '''
             while True: 
                 in_val = await self.in_queue.git() 
                 out = int((in_val / self.ref_val) * self.max_val) 
@@ -99,8 +109,8 @@ class AFE:
 
     def __init__(
             self, 
-            in_queue, 
-            out_queue
+            in_queue: Queue, 
+            out_queue: Queue
             ): 
         self.in_queue = in_queue 
         self.out_queue = out_queue 
