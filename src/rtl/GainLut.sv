@@ -39,103 +39,104 @@ module GainLut (
     case (gain_dB_i) 
       GAIN_M16DB: begin 
         hga_bypass_o = 1'h1;
-        
+        pga_code_o = 8'h4F;
       end
       GAIN_M12DB: begin 
         hga_bypass_o = 1'h1;
-
+        pga_code_o = 8'h5B;
       end
       GAIN_M8DB: begin 
         hga_bypass_o = 1'h1;
-
+        pga_code_o = 8'h67;
       end
       GAIN_M4DB: begin 
         hga_bypass_o = 1'h1;
-
+        pga_code_o = 8'h73;
       end
       GAIN_0DB: begin 
         hga_bypass_o = 1'h1;
-
+        pga_code_o = 8'h80;
       end
       GAIN_4DB: begin 
         hga_bypass_o = 1'h1;
-
+        pga_code_o = 8'h8D;
       end
       GAIN_8DB: begin 
         hga_bypass_o = 1'h1; 
-
+        pga_code_o = 8'h99;
       end
       GAIN_12DB: begin 
         hga_bypass_o = 1'h1; 
-
+        pga_code_o = 8'hA5;
       end
       GAIN_16DB: begin 
         hga_bypass_o = 1'h1; 
-
+        pga_code_o = 8'hB1;
       end
       GAIN_20DB: begin 
         hga_bypass_o = 1'h1; 
-
+        pga_code_o = 8'hBB;
       end
       GAIN_24DB: begin 
         hga_bypass_o = 1'h1; 
-
+        pga_code_o = 8'hC5;
       end
       GAIN_28DB: begin 
         hga_bypass_o = 1'h1; 
-
+        pga_code_o = 8'hCD;
       end
       GAIN_32DB: begin 
         hga_bypass_o = 1'h1; 
-
+        pga_code_o = 8'hD5;
       end
       GAIN_36DB: begin 
         hga_bypass_o = 1'h1; 
-
+        pga_code_o = 8'hDC;
       end
       GAIN_40DB: begin 
         hga_bypass_o = 1'h0; 
-
+        pga_code_o = 8'h80;
       end
       GAIN_44DB: begin 
         hga_bypass_o = 1'h0; 
-
+        pga_code_o = 8'h8D;
       end
       GAIN_48DB: begin 
         hga_bypass_o = 1'h0; 
-
+        pga_code_o = 8'h99;
       end
       GAIN_52DB: begin 
         hga_bypass_o = 1'h0; 
-
+        pga_code_o = 8'hA5;
       end
       GAIN_56DB: begin 
         hga_bypass_o = 1'h0; 
-
+        pga_code_o = 8'hB1;
       end
       GAIN_60DB: begin 
         hga_bypass_o = 1'h0; 
-
+        pga_code_o = 8'hBB;
       end
       GAIN_64DB: begin 
         hga_bypass_o = 1'h0; 
-
+        pga_code_o = 8'hC5;
       end
       GAIN_68DB: begin 
         hga_bypass_o = 1'h0; 
-
+        pga_code_o = 8'hCD;
       end
       GAIN_72DB: begin 
         hga_bypass_o = 1'h0; 
-
+        pga_code_o = 8'hD5;
       end
       GAIN_76DB: begin 
         hga_bypass_o = 1'h0; 
-
+        pga_code_o = 8'hDC;
       end
       default: begin 
+        // unity gain and bypassed hga are safe choices
         hga_bypass_o = 1'h1; 
-        pga_code_o = 8'h7F; // halfway (unity gain)
+        pga_code_o = 8'h80; 
       end
     endcase
   end
