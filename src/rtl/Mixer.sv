@@ -1,0 +1,163 @@
+/*
+* Mixer producing an interleaved stream of 
+* real and imag data.
+*/
+module Mixer #(
+  DW, 
+  SAMP_RATE, 
+  FREQ,
+  LUT_ABITS
+  ) (
+  input clk, 
+  input rst, 
+  input signed [DW - 1:0] data_i, 
+  input valid_i,
+  output reg signed [DW - 1:0] data_o,
+  output reg valid_o
+  ); 
+
+  localparam LUT_QBITS = DW - 1;
+  localparam PHASE_QBITS = 4;
+  localparam PHASE_BITS = LUT_ABITS + PHASE_QBITS;
+  localparam QUARTER_PHASE = (2**PHASE_BITS) >> 2;
+
+  localparam real PHASE_INC_REAL = real'(2**LUT_ABITS) * real'(FREQ)/real'(SAMP_RATE);
+  localparam PHASE_INC = $rtoi(PHASE_INC_REAL * real'(2**PHASE_QBITS));
+
+  // 1. register input 
+  // 2. multiply by sin 
+  // 3. multiply by cos
+
+  logic signed [DW*2 - 1:0] acc;     // multiply acc
+  reg signed [DW - 1:0] data_reg;  // input data reg
+
+  wire signed [DW - 1:0] osc;     // oscillator 
+
+  reg [PHASE_BITS - 1:0] phase_reg; 
+  logic [PHASE_BITS - 1:0] phase;
+  logic [LUT_ABITS - 1:0] addr;
+
+  /***************** 
+  * STATE MACHINE 
+  * ***************/ 
+
+  typedef enum {
+    IDLE, 
+    SIN_MULT, 
+    COS_MULT
+    } states_t;
+
+    reg [1:0] state; 
+    logic [1:0] next_state; 
+
+    // state transition
+    always_ff @(posedge clk, posedge rst) begin 
+      if (rst) begin 
+        state <= IDLE; 
+      end
+      else begin
+        state <= next_state;
+      end
+    end
+
+    // next state 
+    always_comb begin 
+      case (state) 
+        IDLE: begin 
+          next_state = valid_i ? SIN_MULT : IDLE;
+        end
+        SIN_MULT: begin 
+          next_state = COS_MULT;
+        end
+        COS_MULT: begin 
+          next_state = IDLE;
+        end
+        default: begin 
+          next_state = IDLE;
+        end
+      endcase
+    end
+
+    /********************
+    * SEQUENTIAL
+    * ******************/ 
+
+  // input data reg
+  always_ff @(posedge clk, posedge rst) begin 
+    if (rst) begin 
+      data_reg <= 'h0;
+    end
+    else begin 
+      if ((state == IDLE) && valid_i) begin 
+        data_reg <= data_i;
+      end
+    end
+  end
+
+  // output 
+  always_ff @(posedge clk, posedge rst) begin 
+    if (rst) begin 
+      valid_o <= 1'h0;
+      data_o <= 'h0;
+    end
+    else begin 
+      if ((state == SIN_MULT) || (state == COS_MULT)) begin 
+        valid_o <= 1'h1;
+        data_o <= acc >>> LUT_QBITS;
+      end
+      else begin 
+        valid_o <= 1'h0;
+      end
+    end
+  end
+
+  // phase register
+  always_ff @(posedge clk, posedge rst) begin 
+    if (rst) begin 
+      phase_reg <= 'h0;
+    end 
+    else begin 
+      // this is the second state, so incrementing the phase here 
+      // sets it up for the next sample
+      if (state == COS_MULT) begin 
+        phase_reg <= phase_reg + PHASE_INC;
+      end
+    end 
+  end
+
+  /*************** 
+  * COMBINATIONAL 
+  * *************/ 
+
+  always_comb begin 
+    case (state) 
+      // this state is one clk cycle before COS is needed, 
+      // so we can subract a quarter of phase here
+      SIN_MULT: begin 
+        phase = phase_reg - QUARTER_PHASE;
+      end
+      default: begin 
+        phase = phase_reg;
+      end
+    endcase
+  end
+
+  assign acc = data_reg * osc;
+  assign addr = phase[PHASE_QBITS +: LUT_ABITS];
+
+  /*************** 
+  * MODULES 
+  * *************/
+
+  // oscillator (LUT)
+  SineLut #(
+    .ABITS(LUT_ABITS), 
+    .QBITS(LUT_QBITS)
+    ) sine_osc (
+      .clk(clk), 
+      .rst(rst), 
+      .addr_i(addr), 
+      .sample_o(osc)
+    );
+
+endmodule
