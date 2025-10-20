@@ -13,7 +13,8 @@ module Mixer #(
   input signed [DW - 1:0] data_i, 
   input valid_i,
   output reg signed [DW - 1:0] data_o,
-  output reg valid_o
+  output reg valid_o,
+  output reg last_o
   ); 
 
   localparam LUT_QBITS = DW - 1;
@@ -99,14 +100,19 @@ module Mixer #(
     if (rst) begin 
       valid_o <= 1'h0;
       data_o <= 'h0;
+      last_o <= 'h0;
     end
     else begin 
       if ((state == SIN_MULT) || (state == COS_MULT)) begin 
         valid_o <= 1'h1;
         data_o <= acc >>> LUT_QBITS;
+        if (state == COS_MULT) begin 
+          last_o <= 1'h1;
+        end
       end
       else begin 
         valid_o <= 1'h0;
+        last_o <= 1'h0;
       end
     end
   end
