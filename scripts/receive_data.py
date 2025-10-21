@@ -1,6 +1,7 @@
 import serial
+from typing import Callable
 
-def main(): 
+def main(f: Callable[[float]]): 
 
     ser = serial.Serial("/dev/ttyUSB0", 115_200, 8) 
     c = 0
@@ -16,8 +17,12 @@ def main():
         if (int.from_bytes(end) != 0xBB): 
             continue
         c += 1
+        f(val)
         print(val) 
         # print(f"c: {c}")
 
+def print_val(val): 
+    print(val)
+
 if __name__ == "__main__": 
-    main()
+    main(print_val)
