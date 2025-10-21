@@ -1,19 +1,19 @@
 /*
 * Convertes complex to magnitude squared.
 */
-module Comp2MagSqrd #(
+module Complex2Power #(
   DW
   ) (
   input clk, 
   input rst, 
-  input [DW - 1:0] data_i,  // interleaved real, imag
+  input signed [DW - 1:0] data_i,  // interleaved real, imag
   input valid_i,
   input last_i,
-  output reg [2*DW - 1:0] mag_sqrd_o,
-  output valid_o
+  output reg [2*DW - 1:0] power_o,
+  output reg valid_o
   ); 
 
-  reg [DW - 1:0] data_reg;
+  reg signed [DW - 1:0] data_reg;
   reg valid_reg;
   reg last_reg;
 
@@ -41,19 +41,19 @@ module Comp2MagSqrd #(
   // output registers 
   always_ff @(posedge clk, posedge rst) begin 
     if (rst) begin 
-      mag_sqrd_o <= 'h0; 
+      power_o <= 'h0; 
       valid_o <= 1'h0;
     end 
     else begin 
       if (valid_reg) begin 
         // real (first channel)
         if (!last_reg) begin 
-          mag_sqrd_o <= sq;
+          power_o <= sq;
           valid_o <= 1'h0;
         end
         // imag (second channel)
         else begin 
-          mag_sqrd_o <= mag_sqrd_o + sq;
+          power_o <= power_o + sq;
           valid_o <= 1'h1;
         end
       end
