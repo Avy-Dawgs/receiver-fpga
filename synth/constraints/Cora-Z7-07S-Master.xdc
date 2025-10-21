@@ -43,8 +43,8 @@ set_property -dict { PACKAGE_PIN D20   IOSTANDARD LVCMOS33 } [get_ports { btn[0]
 #set_property -dict { PACKAGE_PIN J15   IOSTANDARD LVCMOS33 } [get_ports { crypto_sda }];
 
 ## Dedicated Analog Inputs
-#set_property -dict { PACKAGE_PIN K9    IOSTANDARD LVCMOS33 } [get_ports { Vp_Vn_0_v_p }]; #VP_0 Sch=xadc_v_p
-#set_property -dict { PACKAGE_PIN L10   IOSTANDARD LVCMOS33 } [get_ports { Vp_Vn_0_v_n }]; #VN_0 Sch=xadc_v_n
+set_property -dict { PACKAGE_PIN K9    IOSTANDARD LVCMOS33 } [get_ports { Vp_Vn_0_v_p }]; #VP_0 Sch=xadc_v_p
+set_property -dict { PACKAGE_PIN L10   IOSTANDARD LVCMOS33 } [get_ports { Vp_Vn_0_v_n }]; #VN_0 Sch=xadc_v_n
 
 ## ChipKit Outer Analog Header - as Single-Ended Analog Inputs
 ## NOTE: These ports can be used as single-ended analog inputs with voltages from 0-3.3V (ChipKit analog pins A0-A5) or as digital I/O.
