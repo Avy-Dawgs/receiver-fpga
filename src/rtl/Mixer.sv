@@ -12,6 +12,7 @@ module Mixer #(
   input rst, 
   input signed [DW - 1:0] data_i, 
   input valid_i,
+  input ready_i,
   output reg signed [DW - 1:0] data_o,
   output reg valid_o,
   output reg last_o
@@ -29,7 +30,7 @@ module Mixer #(
   // 2. multiply by sin 
   // 3. multiply by cos
 
-  logic signed [DW*2 - 1:0] acc;     // multiply acc
+  logic signed [2*DW - 1:0] acc;     // multiply acc
   reg signed [DW - 1:0] data_reg;  // input data reg
 
   wire signed [DW - 1:0] osc;     // oscillator 
@@ -43,13 +44,15 @@ module Mixer #(
   * ***************/ 
 
   typedef enum {
-    IDLE, 
-    SIN_MULT, 
-    COS_MULT
+    IDLE,           // wait for input valid
+    SIN_MULT,       // multiply by sin
+    SIN_OUT_WAIT,   // wait for output to be transferred
+    COS_MULT,       // multiply by cos
+    COS_OUT_WAIT    // wait for output to be transferred
     } states_t;
 
-    reg [1:0] state; 
-    logic [1:0] next_state; 
+    reg [2:0] state; 
+    logic [2:0] next_state; 
 
     // state transition
     always_ff @(posedge clk, posedge rst) begin 
@@ -68,10 +71,16 @@ module Mixer #(
           next_state = valid_i ? SIN_MULT : IDLE;
         end
         SIN_MULT: begin 
-          next_state = COS_MULT;
+          next_state = SIN_OUT_WAIT;
+        end
+        SIN_OUT_WAIT: begin 
+          next_state = ready_i ? COS_MULT : SIN_OUT_WAIT;
         end
         COS_MULT: begin 
-          next_state = IDLE;
+          next_state = COS_OUT_WAIT;
+        end
+        COS_OUT_WAIT: begin 
+          next_state = ready_i ? IDLE : COS_OUT_WAIT;
         end
         default: begin 
           next_state = IDLE;
@@ -95,24 +104,38 @@ module Mixer #(
     end
   end
 
-  // output 
+  // outputs 
   always_ff @(posedge clk, posedge rst) begin 
     if (rst) begin 
       valid_o <= 1'h0;
+      last_o <= 1'h0;
+    end
+    else begin 
+      case (state) 
+        SIN_OUT_WAIT: begin
+          valid_o <= 1'h1;
+          last_o <= 1'h0;
+        end 
+        COS_OUT_WAIT: begin 
+          valid_o <= 1'h1;
+          last_o <= 1'h1;
+        end
+        default: begin 
+          valid_o <= 1'h0;
+          last_o <= 1'h0;
+        end
+      endcase
+    end
+  end
+
+  // calculations 
+  always_ff @(posedge clk, posedge rst) begin 
+    if (rst) begin 
       data_o <= 'h0;
-      last_o <= 'h0;
     end
     else begin 
       if ((state == SIN_MULT) || (state == COS_MULT)) begin 
-        valid_o <= 1'h1;
         data_o <= acc >>> LUT_QBITS;
-        if (state == COS_MULT) begin 
-          last_o <= 1'h1;
-        end
-      end
-      else begin 
-        valid_o <= 1'h0;
-        last_o <= 1'h0;
       end
     end
   end
@@ -123,9 +146,8 @@ module Mixer #(
       phase_reg <= 'h0;
     end 
     else begin 
-      // this is the second state, so incrementing the phase here 
-      // sets it up for the next sample
-      if (state == COS_MULT) begin 
+      // values have all been calculated, inc phase
+      if (state == COS_OUT_WAIT) begin 
         phase_reg <= phase_reg + PHASE_INC;
       end
     end 
@@ -137,9 +159,9 @@ module Mixer #(
 
   always_comb begin 
     case (state) 
-      // this state is one clk cycle before COS is needed, 
+      // this state is one before COS is needed, 
       // so we can subract a quarter of phase here
-      SIN_MULT: begin 
+      SIN_OUT_WAIT: begin 
         phase = phase_reg - QUARTER_PHASE;
       end
       default: begin 
