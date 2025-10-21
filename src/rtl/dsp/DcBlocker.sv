@@ -16,7 +16,7 @@ module DcBlocker
   input en_i,
   input valid_i, 
   output reg valid_o, 
-  output signed [INPUT_DW + OUTPUT_FRAC_BITS:0] data_o
+  output signed [INPUT_DW + OUTPUT_FRAC_BITS - 1:0] data_o
 ); 
 
   // add one bit as the sign because input is an unsigned number
@@ -57,13 +57,9 @@ module DcBlocker
 
   always_comb begin 
     case (state) 
-      IDLE: 
-        if (update_transition) begin 
-          next_state = UPDATE;
-        end
-        else begin 
-          next_state = IDLE;
-        end
+      IDLE: begin 
+      next_state = update_transition ? UPDATE : IDLE;
+      end
       default: 
         next_state = IDLE;
     endcase
