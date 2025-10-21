@@ -19,7 +19,6 @@ module Fifo
 
   reg [DW - 1:0] memory [0:2**SIZE_POW2 - 1];
   reg [SIZE_POW2 - 1:0] rd_idx, wr_idx;
-  logic empty, full;
 
   logic do_rd, do_wr;
 
