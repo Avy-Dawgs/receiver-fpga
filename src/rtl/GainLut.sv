@@ -2,11 +2,13 @@
 * Determine digital pot code and hga bypass from gain.
 */
 module GainLut (
-  input signed [5:0] gain_dB_i,   // gain to be set (as a multiple of 4 dB)
+  input signed [7:0] gain_dB_i,
   output logic [7:0] pga_code_o, 
   output logic hga_bypass_o
   ); 
-  // TODO calculate pga codes for each gain value
+
+  localparam signed [5:0] MIN_LUT_ADDR = -4;
+  localparam signed [5:0] MAX_LUT_ADDR = 19; 
 
   typedef enum {
     GAIN_M16DB = -4,
@@ -35,8 +37,25 @@ module GainLut (
     GAIN_76DB = 19
   } gain_t;
 
+  logic signed [5:0] gain_dB_div4;    // input divided by 4
+  logic signed [5:0] lut_addr;        // address used for LUT
+
+  // input clamping
   always_comb begin 
-    case (gain_dB_i) 
+    if (gain_dB_div4 > MAX_LUT_ADDR) begin 
+      lut_addr = MAX_LUT_ADDR; 
+    end
+    else if (gain_dB_div4 < MIN_LUT_ADDR) begin 
+      lut_addr = MIN_LUT_ADDR;
+    end
+    else begin 
+      lut_addr = gain_dB_div4;
+    end
+  end
+
+  // LUT
+  always_comb begin 
+    case (lut_addr) 
       GAIN_M16DB: begin 
         hga_bypass_o = 1'h1;
         pga_code_o = 8'h4F;
@@ -134,11 +153,13 @@ module GainLut (
         pga_code_o = 8'hDC;
       end
       default: begin 
-        // unity gain and bypassed hga are safe choices
+        // unity gain on PGA and bypassed HGA are safe choices
         hga_bypass_o = 1'h1; 
         pga_code_o = 8'h80; 
       end
     endcase
   end
+
+  assign gain_dB_div4 = gain_dB_i >>> 2;
 
 endmodule
