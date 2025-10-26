@@ -21,12 +21,12 @@ module ClockGenerator
   always_ff @(posedge clk, posedge rst) begin 
     if (rst) begin 
       count <= 'd0;
-      gen_clk <= 1'h0;
+      gen_clk_o <= 1'h0;
     end
     else begin 
       if (max_count_reached) begin 
         count <= 'd0;
-        gen_clk <= ~gen_clk;
+        gen_clk_o <= ~gen_clk_o;
       end
       else begin 
         count <= count + 1'd1;
