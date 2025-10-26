@@ -21,7 +21,7 @@ module Mixer #(
   localparam LUT_QBITS = DW - 1;
   localparam PHASE_QBITS = 4;
   localparam PHASE_BITS = LUT_ABITS + PHASE_QBITS;
-  localparam QUARTER_PHASE = (2**PHASE_BITS) >> 2;
+  localparam [PHASE_BITS - 1:0] QUARTER_PHASE = (2**PHASE_BITS) >> 2;
 
   localparam real PHASE_INC_REAL = real'(2**LUT_ABITS) * real'(FREQ)/real'(SAMP_RATE);
   localparam PHASE_INC = $rtoi(PHASE_INC_REAL * real'(2**PHASE_QBITS));
