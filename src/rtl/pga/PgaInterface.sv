@@ -4,141 +4,106 @@
 * Set gain by using set_i. done_o signal goes high when SPI transfer is
 * complete.
 */
-module PgaInterface #(
-  CLK_FREQ
-  ) (
-  input clk, 
+module PgaInterface (
+  input sck,
   input rst, 
-  input [7:0] gain_i, 
-  input set_i,
-  output done_o, 
-
-  output logic sck, 
-  output logic cs_n, 
-  output logic miso
+  input [7:0] code_i, 
+  input set_i, 
+  output ready_o,
+  output reg cs_n, 
+  output miso
 ); 
+  
+  reg [7:0] shiftreg; 
+  reg [2:0] bit_count;
 
-localparam DW = 8;
+  logic last_bit;
 
-localparam SCK_FREQ = 12.5e6;
+  typedef enum {
+    IDLE, 
+    ACTIVE, 
+    WAIT
+  } states_t;
 
-wire sck_internal; 
-wire sck_falling_edge; 
-wire sck_rising_edge;
-logic sck_shift_edge;
+  reg [1:0] state; 
+  logic [1:0] next_state; 
 
-logic cs_n;
-logic cs_n_falling_edge;
-
-wire serializer_miso;
-
-reg [$clog2(DW-1) - 1:0] bit_count;
-
-typedef enum bit[1:0]{
-  IDLE, 
-  WAIT_FOR_EDGE,
-  TRANSFER
-} states_t;
-
-reg [1:0] state; 
-logic [1:0] next_state; 
-
-// state transition
-always_ff @(posedge clk, posedge rst) begin 
-  if (rst) begin 
-    state <= IDLE;
-  end 
-  else begin 
-    state <= next_state;
+  // state transition
+  always_ff @(negedge sck, posedge rst) begin 
+    if (rst) begin 
+      state <= IDLE;
+    end 
+    else begin 
+      state <= next_state;
+    end
   end
-end
 
-// state transiiton
-always_comb begin 
-  case (state)
-    IDLE: begin
-      next_state = set_i ? WAIT_FOR_EDGE : IDLE;
-    end
-    WAIT_FOR_EDGE: begin 
-      next_state = sck_shift_edge ? TRANSFER : WAIT_FOR_EDGE;
-    end
-    TRANSFER: begin 
-      next_state = TRANSFER;
-      if (sck_shift_edge && (bit_count == (DW-1))) begin 
+  // next state
+  always_comb begin 
+    case (state) 
+      IDLE: begin 
+        next_state = set_i ? ACTIVE : IDLE;
+      end 
+      ACTIVE: begin 
+        next_state = ACTIVE; 
+        if (last_bit) begin 
+          next_state = WAIT;
+        end
+      end
+      WAIT: begin 
+        next_state = IDLE; 
+      end
+      default: begin 
         next_state = IDLE;
       end
-    end
-    default: begin 
-      next_state = IDLE;     
-    end
-  endcase
-end
-
-// bit counter 
-always_ff @(posedge clk, posedge rst) begin 
-  if (rst) begin 
-    bit_count <= 'h0;
+    endcase
   end
-  else begin 
-    if (state == TRANSFER) begin 
-      if (sck_shift_edge) begin 
-        bit_count <= bit_count + 1'h1;
-      end
-    end
+
+  always_ff @(negedge sck, posedge rst) begin 
+    if (rst) begin 
+      shiftreg <= 'h0;
+    end 
     else begin 
+      if (set_i && (state == IDLE)) begin
+        shiftreg <= code_i;
+      end
+      else if (state == ACTIVE) begin
+        shiftreg <= {shiftreg[6:0], 1'h0};
+      end
+    end 
+  end
+
+  // bit count
+  always_ff @(negedge sck, posedge rst) begin 
+    if (rst) begin 
       bit_count <= 'h0;
     end
+    else begin 
+      if (state == ACTIVE) begin 
+        bit_count <= bit_count + 1'h1;
+      end
+      else begin 
+        bit_count <= 'h0;
+      end
+    end
   end
-end
 
-// output logic
-always_comb begin 
-    if (state == TRANSFER) begin 
-      cs_n = 1'h0;
-      miso = serializer_miso;
-      sck = sck_internal;
+  always_ff @(negedge sck, posedge rst) begin 
+    if (rst) begin 
+      cs_n <= 1'h1;
     end
     else begin 
-      cs_n = 1'h1;
-      miso = 1'h1;
-      sck = 1'h0;
+      if ((state == IDLE) && set_i) begin 
+        cs_n <= 1'h0;
+      end
+      else if (last_bit) begin
+        cs_n <= 1'h1;
+      end
     end
-end
+  end
 
-assign cs_n_falling_edge = (state == WAIT_FOR_EDGE) && sck_shift_edge;
-assign done_o = (state == TRANSFER) && sck_shift_edge;
-assign sck_shift_edge = sck_falling_edge;
-
-SpiSerializer #(
-  .DW(DW)
-  ) 
-  serializer ( 
-    .clk(clk), 
-    .rst(rst), 
-    .data_i(gain_i), 
-    .sck_shift_edge(sck_shift_edge), 
-    .cs_n_falling_edge(cs_n_falling_edge), 
-    .miso(serializer_miso)
-  );
-
-
-ClockGenerator #(
-  .CLK_FREQ(CLK_FREQ), 
-  .TARGET_CLK_FREQ(SCK_FREQ)
-  ) 
-  sck_clock_generator (
-    .clk(clk), 
-    .rst(rst), 
-    .gen_clk_o(sck_internal),
-  );
-
-EdgeDetector_synchronous 
-  sck_edge_detector (
-    .clk(clk), 
-    .rst(rst), 
-    .test_clk(sck_internal), 
-    .rising_edge(sck_rising_edge), 
-    .falling_edge(sck_falling_edge)
-  );
+  assign miso = shiftreg[7];
+  assign ready_o = (state == IDLE);
+  assign last_bit = (bit_count == 'd7);
 
 endmodule
