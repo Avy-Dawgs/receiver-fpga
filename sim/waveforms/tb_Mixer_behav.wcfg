@@ -12,14 +12,14 @@
    </db_ref_list>
    <zoom_setting>
       <ZoomStartTime time="0.000 ns"></ZoomStartTime>
-      <ZoomEndTime time="745.001 ns"></ZoomEndTime>
-      <Cursor1Time time="117.000 ns"></Cursor1Time>
+      <ZoomEndTime time="3,745.001 ns"></ZoomEndTime>
+      <Cursor1Time time="385.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="182"></NameColumnWidth>
-      <ValueColumnWidth column_width="84"></ValueColumnWidth>
+      <ValueColumnWidth column_width="80"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="23" />
+   <WVObjectSize size="17" />
    <wvobject type="array" fp_name="/tb_Mixer/data_i">
       <obj_property name="ElementShortName">data_i[11:0]</obj_property>
       <obj_property name="ObjectShortName">data_i[11:0]</obj_property>
@@ -118,14 +118,6 @@
       <obj_property name="ElementShortName">rst</obj_property>
       <obj_property name="ObjectShortName">rst</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/tb_Mixer/dut/sine_osc/clk">
-      <obj_property name="ElementShortName">clk</obj_property>
-      <obj_property name="ObjectShortName">clk</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/tb_Mixer/dut/sine_osc/rst">
-      <obj_property name="ElementShortName">rst</obj_property>
-      <obj_property name="ObjectShortName">rst</obj_property>
-   </wvobject>
    <wvobject type="array" fp_name="/tb_Mixer/dut/sine_osc/addr_i">
       <obj_property name="ElementShortName">addr_i[9:0]</obj_property>
       <obj_property name="ObjectShortName">addr_i[9:0]</obj_property>
@@ -138,36 +130,17 @@
       <obj_property name="ElementShortName">qlut_sample[10:0]</obj_property>
       <obj_property name="ObjectShortName">qlut_sample[10:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/tb_Mixer/dut/sine_osc/qlut">
-      <obj_property name="ElementShortName">qlut[0:255][11:0]</obj_property>
-      <obj_property name="ObjectShortName">qlut[0:255][11:0]</obj_property>
-      <obj_property name="Radix">REALRADIX</obj_property>
-      <obj_property name="radix_realType">SIGNEDFIXEDPOINTRADIX</obj_property>
-      <obj_property name="radix_fractionWidth">11</obj_property>
-      <obj_property name="radix_otherWidth">0</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_Mixer/dut/sine_osc/ADDR_BITS">
-      <obj_property name="ElementShortName">ADDR_BITS[31:0]</obj_property>
-      <obj_property name="ObjectShortName">ADDR_BITS[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_Mixer/dut/sine_osc/FRAC_BITS">
-      <obj_property name="ElementShortName">FRAC_BITS[31:0]</obj_property>
-      <obj_property name="ObjectShortName">FRAC_BITS[31:0]</obj_property>
-   </wvobject>
    <wvobject type="array" fp_name="/tb_Mixer/dut/sine_osc/SIZE">
       <obj_property name="ElementShortName">SIZE[31:0]</obj_property>
       <obj_property name="ObjectShortName">SIZE[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_Mixer/dut/sine_osc/QLUT_ADDR_BITS">
-      <obj_property name="ElementShortName">QLUT_ADDR_BITS[31:0]</obj_property>
-      <obj_property name="ObjectShortName">QLUT_ADDR_BITS[31:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_Mixer/dut/sine_osc/QLUT_SIZE">
       <obj_property name="ElementShortName">QLUT_SIZE[31:0]</obj_property>
       <obj_property name="ObjectShortName">QLUT_SIZE[31:0]</obj_property>
    </wvobject>
-   <wvobject type="other" fp_name="/tb_Mixer/dut/sine_osc/PI">
-      <obj_property name="ElementShortName">PI</obj_property>
-      <obj_property name="ObjectShortName">PI</obj_property>
+   <wvobject type="array" fp_name="/tb_Mixer/dut/data_reg">
+      <obj_property name="ElementShortName">data_reg[11:0]</obj_property>
+      <obj_property name="ObjectShortName">data_reg[11:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
    </wvobject>
 </wave_config>

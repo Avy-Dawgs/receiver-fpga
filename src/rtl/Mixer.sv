@@ -19,12 +19,12 @@ module Mixer #(
   ); 
 
   localparam LUT_QBITS = DW - 1;
-  localparam PHASE_QBITS = 4;
+  localparam PHASE_QBITS = 8;
   localparam PHASE_BITS = LUT_ABITS + PHASE_QBITS;
   localparam [PHASE_BITS - 1:0] QUARTER_PHASE = (2**PHASE_BITS) >> 2;
 
   localparam real PHASE_INC_REAL = real'(2**LUT_ABITS) * real'(FREQ)/real'(SAMP_RATE);
-  localparam PHASE_INC = $rtoi(PHASE_INC_REAL * real'(2**PHASE_QBITS));
+  localparam [PHASE_BITS - 1:0] PHASE_INC = $rtoi(PHASE_INC_REAL * real'(2**PHASE_QBITS));
 
   // 1. register input 
   // 2. multiply by sin 
@@ -147,7 +147,7 @@ module Mixer #(
     end 
     else begin 
       // values have all been calculated, inc phase
-      if (state == COS_OUT_WAIT) begin 
+      if (state == COS_MULT) begin 
         phase_reg <= phase_reg + PHASE_INC;
       end
     end 

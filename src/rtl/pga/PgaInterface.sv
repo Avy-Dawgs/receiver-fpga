@@ -1,7 +1,8 @@
 /*
 * Interface for controlling PGA. 
 * 
-* Set gain by using set_i. done_o signal goes high when SPI transfer is
+* Set gain by using set_i. ready_o signal indicates that the interface 
+* is ready to set again.
 * complete.
 */
 module PgaInterface (
@@ -9,9 +10,9 @@ module PgaInterface (
   input rst, 
   input [7:0] code_i, 
   input set_i, 
-  output ready_o,
+  output logic ready_o,
   output reg cs_n, 
-  output miso
+  output logic miso
 ); 
   
   reg [7:0] shiftreg; 

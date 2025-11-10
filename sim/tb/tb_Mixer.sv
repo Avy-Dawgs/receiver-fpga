@@ -14,8 +14,10 @@ reg clk;
 reg rst; 
 reg [DW - 1:0] data_i; 
 reg valid_i; 
+logic ready_i;
 wire [DW - 1:0] data_o; 
 wire valid_o;
+wire last_o;
 
 reg [DW - 1:0] re; 
 reg [DW - 1:0] im; 
@@ -25,6 +27,8 @@ real mag;
 
 assign mag_sqrd = re*re + im*im;
 assign mag = $sqrt(mag_sqrd);
+
+assign ready_i = 1'h1;
 
 reg valid_o_last;
 
@@ -55,7 +59,7 @@ initial begin
 
   #CLK_PERIOD;
 
-  forever #9 begin 
+  forever #(CLK_PERIOD*10) begin 
     data_i = $rtoi(1000 * $cos(2 * PI * FREQ * t));
     valid_i = 1;
     #CLK_PERIOD; 
@@ -71,13 +75,12 @@ always_ff @(posedge clk, posedge rst) begin
     re <= 'h0;
     im <= 'h0;
   end 
-  else begin 
-    valid_o_last <= valid_o; 
+  else if (valid_o) begin 
 
-    if (!valid_o_last && valid_o) begin 
+    if (!last_o) begin 
       re <= data_o;
     end
-    if (valid_o_last && valid_o) begin 
+    else begin 
       im <= data_o;
     end
   end
@@ -94,7 +97,9 @@ Mixer #(
     .rst(rst), 
     .data_i(data_i), 
     .valid_i(valid_i), 
+    .ready_i(ready_i),
     .data_o(data_o), 
-    .valid_o(valid_o)
+    .valid_o(valid_o),
+    .last_o(last_o)
   );
 endmodule

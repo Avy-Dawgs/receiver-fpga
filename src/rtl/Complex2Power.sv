@@ -18,7 +18,7 @@ module Complex2Power #(
   reg last_reg;
 
   // multiplier
-  logic [2*DW - 1:0] sq; 
+  logic signed [2*DW - 1:0] sq; 
 
   /******************** 
   * Sequential 

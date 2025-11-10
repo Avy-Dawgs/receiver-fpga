@@ -24,7 +24,7 @@ module DcBlocker
 
   // leave one bit for sign
   localparam ALPHA_FRAC_BITS = INTERNAL_DW - 1;
-  localparam real ALPHA_REAL = 0.99;
+  localparam real ALPHA_REAL = 0.999;
   localparam signed [INTERNAL_DW - 1:0] ALPHA  = $rtoi(ALPHA_REAL * 2.0**ALPHA_FRAC_BITS);
 
   logic signed [INTERNAL_DW * 2 - 1:0] alpha_mult_acc; 

@@ -1,24 +1,26 @@
+/*
+* Minimal test of signal path.
+*/
 module DdcTest (
   input clk, 
   input [0:0] btn, 
-  input Vp_Vn_0_v_p, 
-  input Vp_Vn_0_v_n,
-  output ck_io13
+  input vauxp5, 
+  input vauxn5, 
+  output pio29
 ); 
 
-  localparam SAMP_RATE = 1_000_000;
-  localparam CLK_FREQ = 125_000_000; 
+  localparam SAMP_RATE = 962_000;
+  localparam CLK_FREQ = 50_000_000; 
   localparam UART_BAUD = 115_200; 
   localparam UART_FIFO_ABITS = 3;
   localparam MIXER_FREQ = 45_700;
 
   logic rst; 
 
-  wire vp; 
-  wire vn;
-
   wire [11:0] adc_sample; 
   wire adc_sample_valid;
+
+  wire core_clk;
 
   logic datapath_en; 
   wire [15:0] datapath_out;
@@ -30,23 +32,32 @@ module DdcTest (
   assign datapath_en = 1'h1;
   assign rst = btn[0];
 
-  assign vp = Vp_Vn_0_v_p; 
-  assign vn = Vp_Vn_0_v_n;
+  mmcm_core mmcm_i
+   (
+    // Clock out ports
+    .clk_out1(core_clk),     // output clk_out1
+    // Status and control signals
+    .reset(rst), // input reset
+    .locked(locked),       // output locked
+   // Clock in ports
+    .clk_in1(clk)      // input clk_in1
+);
 
   XADC_wrapper xadc (
-    .clk(clk), 
+    .clk(core_clk), 
     .rst(rst), 
-    .vp(vp), 
-    .vn(vn), 
+    .vauxp5(vauxp5), 
+    .vauxn5(vauxn5), 
     .data_o(adc_sample), 
     .valid_o(adc_sample_valid)
   );
 
+  // TODO switch with matlab generated
   DataPath #(
     .SAMP_RATE(SAMP_RATE), 
     .MIXER_FREQ(MIXER_FREQ)
   ) datapath (
-    .clk(clk), 
+    .clk(core_clk), 
     .rst(rst), 
     .en_i(datapath_en), 
     .adc_sample_i(adc_sample), 
@@ -56,7 +67,7 @@ module DdcTest (
   );
 
   DataFramer data_framer (
-    .clk(clk), 
+    .clk(core_clk), 
     .rst(rst), 
     .data_i(datapath_out), 
     .valid_i(datapath_out_valid), 
@@ -69,11 +80,11 @@ module DdcTest (
     .BAUD(UART_BAUD), 
     .FIFO_ADDR_BITS(UART_FIFO_ABITS)
   ) uart_tx (
-    .clk(clk), 
+    .clk(core_clk), 
     .rst(rst), 
     .data_i(uart_data), 
     .wr_en_i(uart_wr_en), 
-    .tx_o(ck_io13), 
+    .tx_o(pio29), 
     .fifo_full_o(), 
     .fifo_empty_o()
   );
