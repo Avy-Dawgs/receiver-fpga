@@ -1,2 +1,6 @@
 vivado_project/*
 !vivado_project/create-project.tcl
+*.slxc
+slprj/
+hdlsrc/
+hdl_prj/
