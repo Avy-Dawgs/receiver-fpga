@@ -1,7 +1,7 @@
 clear;
 %% System params
 
-sysClkFreq = 50e6;
+sysClkFreq = 52e6;
 
 FsIn = 1e6;   % scaled down by about 5
 % FsOut = 1e3;
