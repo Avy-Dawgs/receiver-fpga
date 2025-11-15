@@ -12,7 +12,7 @@ module EnableGenerator
   output reg en_o
 ); 
 
-  localparam MAX_COUNT = $rtoi(real'(CLK_FREQ) / real'(EN_FREQ)) - 1;
+  localparam MAX_COUNT = $rtoi(0.5 + real'(CLK_FREQ) / real'(EN_FREQ)) - 1;
 
   reg [$clog2(MAX_COUNT) - 1:0] count;
 
