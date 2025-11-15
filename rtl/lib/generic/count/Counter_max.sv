@@ -1,7 +1,7 @@
 /*
 * Simple counter with a max value.
 */
-module Counter #(
+module Counter_max #(
   MAX_COUNT
 ) (
   input clk, 
@@ -13,11 +13,11 @@ module Counter #(
 ); 
 
   always_ff @(posedge clk, posedge rst) begin 
-    if (rst || clr_i) begin 
+    if (rst) begin 
       count_o <= 'h0;
     end
-    else if (en_i) begin 
-      if (max_count_reached_o) begin 
+    else if (en_i) begin
+      if (clr_i || max_count_reached_o) begin 
         count_o <= 'h0;
       end
       else begin 

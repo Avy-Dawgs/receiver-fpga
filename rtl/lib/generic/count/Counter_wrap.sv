@@ -1,7 +1,7 @@
 /*
 * Simple counter that rolls over if not cleared.
 */
-module Counter
+module Counter_wrap
 #(
   DW
 ) 
@@ -14,11 +14,16 @@ module Counter
 ); 
 
 always_ff @(posedge clk, posedge rst) begin 
-  if (rst || clr_i) begin 
+  if (rst) begin 
     count_o <= 'h0;
   end
   else if (en_i) begin 
-    count_o <= count_o + 1'h1;
+    if (clr_i) begin 
+      count_o <= 'h0;
+    end
+    else begin
+      count_o <= count_o + 1'h1;
+    end
   end
 end
 

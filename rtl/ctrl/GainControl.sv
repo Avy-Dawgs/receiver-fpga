@@ -11,7 +11,7 @@ module GainControl #(
     input rst, 
     input [DW - 1:0] data_i, 
     input valid_i, 
-    output signed [7:0] gain_dB_o
+    output signed [7:0] gain_dB_o,
     output set_gain_o
   ); 
 
@@ -22,7 +22,9 @@ module GainControl #(
     if (dB_i > HIGH_RANGE) begin 
       
     end
-    else if ()
+    else if (1'b0) begin 
+
+    end
   end
 
 
