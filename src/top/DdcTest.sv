@@ -1,79 +1,89 @@
 /*
-* Minimal test of signal path.
+* Minimal test of signal path using XADC.
 */
 module DdcTest (
   input clk, 
   input [0:0] btn, 
-  input vauxp5, 
-  input vauxn5, 
+  input vaux5_p, 
+  input vaux5_n, 
   output pio29
 ); 
 
-  localparam SAMP_RATE = 962_000;
-  localparam CLK_FREQ = 50_000_000; 
+  localparam SAMP_RATE = 1_000_000;
+  localparam CLK_FREQ = 52_000_000; 
   localparam UART_BAUD = 115_200; 
   localparam UART_FIFO_ABITS = 3;
-  localparam MIXER_FREQ = 45_700;
 
   logic rst; 
 
-  wire [11:0] adc_sample; 
-  wire adc_sample_valid;
+  wire [11:0] adc_data; 
+  wire adc_valid;
 
   wire core_clk;
 
   logic datapath_en; 
-  wire [15:0] datapath_out;
-  wire datapath_out_valid;
+  wire [31:0] sigchain_data;
+  wire sigchain_valid;
+
+  wire uart_fifo_full;
 
   wire [7:0] uart_data; 
   wire uart_wr_en; 
 
-  assign datapath_en = 1'h1;
+  assign sigchain_en = 1'h1;
+  // assign rst = 1'h0;
   assign rst = btn[0];
 
-  mmcm_core mmcm_i
-   (
-    // Clock out ports
-    .clk_out1(core_clk),     // output clk_out1
-    // Status and control signals
-    .reset(rst), // input reset
-    .locked(locked),       // output locked
-   // Clock in ports
-    .clk_in1(clk)      // input clk_in1
-);
+  mmcm_core mmcm_i (
+    .clk_out1(core_clk),     
+    .clk_in1(clk)      
+  );
 
   XADC_wrapper xadc (
     .clk(core_clk), 
     .rst(rst), 
-    .vauxp5(vauxp5), 
-    .vauxn5(vauxn5), 
-    .data_o(adc_sample), 
-    .valid_o(adc_sample_valid)
+    .vauxp5(vaux5_p), 
+    .vauxn5(vaux5_n), 
+    .data_o(adc_data), 
+    .valid_o(adc_valid)
   );
 
-  // TODO switch with matlab generated
-  DataPath #(
-    .SAMP_RATE(SAMP_RATE), 
-    .MIXER_FREQ(MIXER_FREQ)
-  ) datapath (
+  Signal_Chain sig_chain (
     .clk(core_clk), 
     .rst(rst), 
-    .en_i(datapath_en), 
-    .adc_sample_i(adc_sample), 
-    .adc_sample_valid_i(adc_sample_valid),
-    .dB_o(datapath_out), 
-    .valid_o(datapath_out_valid)
+    .clk_en(sigchain_en), 
+    .data_i(adc_data), 
+    .valid_i(adc_valid), 
+    .ce_out(), 
+    .data_o(sigchain_data), 
+    .valid_o(sigchain_valid)
   );
 
-  DataFramer data_framer (
+  DataFramer #(
+    .NBYTES(4)
+    ) data_framer (
     .clk(core_clk), 
     .rst(rst), 
-    .data_i(datapath_out), 
-    .valid_i(datapath_out_valid), 
+    .data_i(sigchain_data), 
+    .valid_i(sigchain_valid), 
+    .uart_fifo_full_i(uart_fifo_full),
     .uart_data(uart_data), 
-    .wr_en_o(uart_wr_en)
+    .uart_wr_en_o(uart_wr_en)
   );
+
+ila_0 ila_i (
+	.clk(core_clk), // input wire clk
+
+
+	.probe0(adc_data), // input wire [11:0]  probe0  
+	.probe1(adc_valid), // input wire [0:0]  probe1 
+	.probe2(sigchain_data), // input wire [31:0]  probe2 
+	.probe3(sigchain_valid), // input wire [0:0]  probe3 
+	.probe4(uart_data), // input wire [7:0]  probe4 
+	.probe5(uart_wr_en), // input wire [0:0]  probe5 
+	.probe6(uart_fifo_full), // input wire [0:0]  probe6 
+	.probe7(pio29) // input wire [0:0]  probe7
+);
 
   UartTx #(
     .CLK_FREQ(CLK_FREQ), 
@@ -85,7 +95,7 @@ module DdcTest (
     .data_i(uart_data), 
     .wr_en_i(uart_wr_en), 
     .tx_o(pio29), 
-    .fifo_full_o(), 
+    .fifo_full_o(uart_fifo_full), 
     .fifo_empty_o()
   );
 
