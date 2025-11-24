@@ -1,6 +1,5 @@
 /*
 * Interface for Adc. (LTC2315)
-* Handles clock domain crossing to system clock.
 */
 module AdcInterface (
   input sck, 
