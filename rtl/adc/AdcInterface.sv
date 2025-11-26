@@ -4,17 +4,34 @@
 module AdcInterface (
   input sck, 
   input rst,
-  input mosi,
+  input miso,
   output reg cs_n,
-  output [11:0] data_o, 
-  output valid_o
+  output reg [11:0] data_o, 
+  output valid_o, 
+  output error_o
 ); 
 
   reg [4:0] rising_edge_count;
   reg [11:0] shiftreg; 
 
+  reg error;     // start bit error
+
   logic start_conv; 
   logic start_acq;
+
+  reg [1:0] sample_count;
+
+  // sample count
+  always_ff @(posedge sck, posedge rst) begin 
+    if (rst) begin 
+      sample_count <= 'd0;
+    end 
+    else if (start_acq) begin 
+      if (sample_count < 'd3) begin 
+        sample_count <= sample_count + 1'd1;
+      end
+    end
+  end
 
   // shiftreg
   always_ff @(posedge sck, posedge rst) begin 
@@ -22,7 +39,7 @@ module AdcInterface (
       shiftreg <= 'h0;
     end 
     else begin 
-      shiftreg <= {shiftreg[10:0], mosi};
+      shiftreg <= {shiftreg[10:0], miso};
     end
   end
 
@@ -56,10 +73,39 @@ module AdcInterface (
     end
   end
 
+  // start bit error
+  always_ff @(posedge sck, posedge rst) begin 
+    if (rst) begin 
+      error <= 1'h0;
+    end 
+    else begin 
+      if (rising_edge_count == 'h0) begin 
+        error <= (miso != 1'h0);
+      end
+      else if (start_acq) begin 
+        if (!error) begin 
+          error <= (miso != 1'h0);
+        end
+      end
+    end
+  end
+
+  // output data reg
+  always_ff @(posedge sck, posedge rst) begin 
+    if (rst) begin 
+      data_o <= 'h0;
+    end
+    else begin 
+      if (start_acq) begin 
+        data_o <= shiftreg;
+      end
+    end
+  end
+
   assign start_conv = (rising_edge_count == 'd17);
   assign start_acq = (rising_edge_count == 'd13);
 
-  assign valid_o = start_acq;
-  assign data_o = shiftreg;
+  assign valid_o = (sample_count == 'd3) && (rising_edge_count == 'd15);
+  assign error_o = valid_o && error;
 
 endmodule
