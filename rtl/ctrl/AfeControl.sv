@@ -8,8 +8,8 @@ module AfeControl (
   input set_gain_i,
   output logic [7:0] pga_code_o,
   output logic set_pga_o,
-  input set_pga_done_i,
-  output logic hga_bypass_o,
+  input pga_ready_i,
+  output reg hga_bypass_o,
   output logic set_in_progress_o
 ); 
 
@@ -17,7 +17,7 @@ module AfeControl (
   localparam HGA_RSTVAL = 1'h1;
 
   // register that holds the current gain (befure LUT)
-  reg signed [5:0] gain_dB_reg;     // gain in dB / 4
+  reg signed [7:0] gain_dB_reg;   
   logic gain_dB_reg_we;
 
   // from the LUT
@@ -89,7 +89,7 @@ module AfeControl (
       end
       GAIN_EVAL__WRITE_SEQ_DETERMINE: begin 
         // HGA bypasses are the same, only PGA is set
-        if (hga_bypass_reg == lut_hga_bypass) begin 
+        if (lut_hga_bypass == hga_bypass_reg) begin 
           next_state = PGA_ONLY__SET;
         end
         // PGA gains are the same, only HGA is set
@@ -107,44 +107,53 @@ module AfeControl (
       end
       // ----- PGA only ----- 
       PGA_ONLY__SET: begin 
-        next_state = PGA_ONLY__WAIT;
+        next_state = PGA_ONLY__SET;
+        if (pga_ready_i) begin 
+          next_state = PGA_ONLY__WAIT;
+        end
       end
       PGA_ONLY__WAIT: begin 
         next_state = PGA_ONLY__WAIT;
         // if PGA is done being set
-        if (set_pga_done_i) begin 
-          next_state = WINDOW__START;
+        if (pga_ready_i) begin 
+          next_state = IDLE;
         end
       end
       // ----- HGA only -----
       HGA_ONLY__SET: begin 
         // simple GPIO set, don't need to wait for anything
-        next_state = WINDOW__START;
+        next_state = IDLE;
       end
       // ----- both dec -----
       BOTH_DEC__SET: begin 
-        next_state = BOTH_DEC__WAIT;
+        next_state = BOTH_DEC__SET; 
+        if (pga_ready_i) begin 
+          next_state = BOTH_DEC__WAIT;
+        end
       end
       BOTH_DEC__WAIT: begin 
         next_state = BOTH_DEC__WAIT;
         // if PGA is done being set
-        if (set_pga_done_i) begin
-          next_state = WINDOW__START;
+        if (pga_ready_i) begin
+          next_state = IDLE;
         end
       end
       // ----- both inc -----
       BOTH_INC__PGA_SET: begin 
-        next_state = BOTH_INC__PGA_WAIT;
+        next_state = BOTH_INC__PGA_SET; 
+        if (pga_ready_i) begin 
+          next_state = BOTH_INC__PGA_WAIT;
+        end
       end
       BOTH_INC__PGA_WAIT: begin 
         next_state = BOTH_INC__PGA_WAIT;
         // if PGA is done being set
-        if (set_pga_done_i) begin 
+        if (pga_ready_i) begin 
           next_state = BOTH_INC__HGA_SET;
         end
       end
       BOTH_INC__HGA_SET: begin
-        next_state = WINDOW__START;
+        next_state = IDLE;
       end
       default: begin 
         next_state = INIT;
@@ -155,10 +164,34 @@ module AfeControl (
   // control signals determind by state
   always_comb begin 
     hga_bypass_reg_we = 1'h0; 
-    pga_code_reg_we = 1'h0; 
     set_pga_o = 1'h0;
     set_in_progress_o = 1'h1;
+    pga_code_reg_we = 1'h0;
 
+    case (state) 
+      IDLE: begin 
+        set_in_progress_o = 1'h0;
+      end
+      GAIN_EVAL__WRITE_SEQ_DETERMINE: begin 
+        pga_code_reg_we = 1'h1;
+      end
+      PGA_ONLY__SET: begin 
+        set_pga_o = 1'h1;
+      end
+      HGA_ONLY__SET: begin 
+        hga_bypass_reg_we = 1'h1;
+      end
+      BOTH_DEC__SET: begin 
+        hga_bypass_reg_we = 1'h1;
+        set_pga_o = 1'h1;
+      end
+      BOTH_INC__PGA_SET: begin 
+        set_pga_o = 1'h1;
+      end
+      BOTH_INC__HGA_SET: begin 
+        hga_bypass_reg_we = 1'h1;
+      end
+    endcase
   end
 
   /****************** 
@@ -171,11 +204,20 @@ module AfeControl (
       gain_dB_reg <= 'h0;
     end 
     else if (gain_dB_reg_we) begin 
-      gain_dB_reg <= gain_dB_i >>> 2;
+      gain_dB_reg <= gain_dB_i;
     end
   end
 
-  // pga code register
+  // hga bypass register
+  always_ff @(posedge clk, posedge rst) begin 
+    if (rst) begin 
+      hga_bypass_o <= HGA_RSTVAL;
+    end 
+    else if (hga_bypass_reg_we) begin 
+      hga_bypass_o <= lut_hga_bypass;
+    end
+  end
+
   always_ff @(posedge clk, posedge rst) begin 
     if (rst) begin 
       pga_code_reg <= PGA_RSTVAL;
@@ -185,28 +227,18 @@ module AfeControl (
     end
   end
 
-  // hga bypass register
-  always_ff @(posedge clk, posedge rst) begin 
-    if (rst) begin 
-      hga_bypass_reg <= HGA_RSTVAL;
-    end 
-    else if (hga_bypass_reg_we) begin 
-      hga_bypass_reg <= lut_hga_bypass;
-    end
-  end
-
   /****************** 
   * Combinational 
   * ****************/
 
-  assign hga_bypass_o = hga_bypass_reg;
   assign pga_code_o = pga_code_reg;
+  assign gain_dB_reg_we = (state == IDLE) && set_gain_i;
 
   /******************** 
   * MODULES
   * ******************/
 
-  GainLut (
+  GainLut gain_lut (
     .gain_dB_i(gain_dB_reg), 
     .pga_code_o(lut_pga_code), 
     .hga_bypass_o(lut_hga_bypass)
