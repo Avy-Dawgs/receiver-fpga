@@ -95,7 +95,7 @@ module AdcInterface (
       data_o <= 'h0;
     end
     else begin 
-      if (falling_edge_count == 'd12) begin 
+      if (start_acq) begin 
         data_o <= shiftreg;
       end
     end
@@ -110,6 +110,9 @@ module AdcInterface (
       if (falling_edge_count == 'd14) begin
         valid_o <= 1'h1; 
         error_o <= error;
+      end
+      else begin 
+        valid_o <= 1'h0;
       end
     end
   end
