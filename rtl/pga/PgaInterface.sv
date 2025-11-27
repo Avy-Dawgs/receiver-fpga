@@ -14,6 +14,9 @@ module PgaInterface (
   output reg cs_n, 
   output logic miso
 ); 
+
+  // cs_n clocked on falling edge 
+  // shiftreg clockedo on rising edge
   
   reg [7:0] shiftreg; 
   reg [2:0] bit_count;
@@ -21,16 +24,17 @@ module PgaInterface (
   logic last_bit;
 
   typedef enum {
-    IDLE, 
-    ACTIVE, 
-    WAIT
+    IDLE,   // waiting for set_i
+    START,  // transfer posedge datareg to shiftreg, and pull cs_n low
+    ACTIVE, // transfer bits
+    WAIT    // to prevent setting again too soon
   } states_t;
 
   reg [1:0] state; 
   logic [1:0] next_state; 
 
   // state transition
-  always_ff @(negedge sck, posedge rst) begin 
+  always_ff @(posedge sck, posedge rst) begin 
     if (rst) begin 
       state <= IDLE;
     end 
@@ -45,6 +49,9 @@ module PgaInterface (
       IDLE: begin 
         next_state = set_i ? ACTIVE : IDLE;
       end 
+      START: begin 
+        next_state = ACTIVE;
+      end
       ACTIVE: begin 
         next_state = ACTIVE; 
         if (last_bit) begin 
@@ -60,12 +67,12 @@ module PgaInterface (
     endcase
   end
 
-  always_ff @(negedge sck, posedge rst) begin 
+  always_ff @(posedge sck, posedge rst) begin 
     if (rst) begin 
       shiftreg <= 'h0;
     end 
     else begin 
-      if (set_i && (state == IDLE)) begin
+      if ((state == IDLE) && set_i) begin
         shiftreg <= code_i;
       end
       else if (state == ACTIVE) begin
@@ -75,7 +82,7 @@ module PgaInterface (
   end
 
   // bit count
-  always_ff @(negedge sck, posedge rst) begin 
+  always_ff @(posedge sck, posedge rst) begin 
     if (rst) begin 
       bit_count <= 'h0;
     end
@@ -94,17 +101,17 @@ module PgaInterface (
       cs_n <= 1'h1;
     end
     else begin 
-      if ((state == IDLE) && set_i) begin 
-        cs_n <= 1'h0;
-      end
-      else if (last_bit) begin
+      if (state == WAIT) begin 
         cs_n <= 1'h1;
+      end
+      else if (state == ACTIVE) begin 
+        cs_n <= 1'h0;
       end
     end
   end
 
   assign miso = shiftreg[7];
-  assign ready_o = (state == IDLE);
+  assign ready_o = !rst && (state == IDLE);
   assign last_bit = (bit_count == 'd7);
 
 endmodule

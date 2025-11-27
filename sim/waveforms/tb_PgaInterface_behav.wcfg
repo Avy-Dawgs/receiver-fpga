@@ -12,14 +12,14 @@
    </db_ref_list>
    <zoom_setting>
       <ZoomStartTime time="0.000 ns"></ZoomStartTime>
-      <ZoomEndTime time="38.251 ns"></ZoomEndTime>
-      <Cursor1Time time="42.000 ns"></Cursor1Time>
+      <ZoomEndTime time="52.642 ns"></ZoomEndTime>
+      <Cursor1Time time="3.598 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="182"></NameColumnWidth>
-      <ValueColumnWidth column_width="64"></ValueColumnWidth>
+      <ValueColumnWidth column_width="60"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="8" />
+   <WVObjectSize size="10" />
    <wvobject type="logic" fp_name="/tb_PgaInterface/rst">
       <obj_property name="ElementShortName">rst</obj_property>
       <obj_property name="ObjectShortName">rst</obj_property>
@@ -51,5 +51,13 @@
    <wvobject type="logic" fp_name="/tb_PgaInterface/ready_o">
       <obj_property name="ElementShortName">ready_o</obj_property>
       <obj_property name="ObjectShortName">ready_o</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_PgaInterface/dut/last_bit">
+      <obj_property name="ElementShortName">last_bit</obj_property>
+      <obj_property name="ObjectShortName">last_bit</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_PgaInterface/dut/bit_count">
+      <obj_property name="ElementShortName">bit_count[2:0]</obj_property>
+      <obj_property name="ObjectShortName">bit_count[2:0]</obj_property>
    </wvobject>
 </wave_config>

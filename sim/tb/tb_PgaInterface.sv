@@ -31,7 +31,7 @@ module tb_PgaInterface();
     #T; 
     rst = 0;
 
-    #(T/2);
+    #(T);
 
     set_i = 1; 
 
@@ -40,8 +40,9 @@ module tb_PgaInterface();
     set_i = 0;
 
     for (int i = 0; i < 8; i++) begin 
-      wait(sck == 0) wait(sck == 1);
-      sent_data[7 - i] = miso;
+      @(posedge sck) begin
+        sent_data[7 - i] = miso;
+      end
     end
     wait (ready_o == 1);
 
