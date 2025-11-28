@@ -18,7 +18,9 @@ module Debounce #(
   // input register 
   always_ff @(posedge clk, posedge rst) begin 
     if (rst) begin 
-      in_reg <= 1'h0;
+      in0 <= 1'h0;
+      in1 <= 1'h0;
+      in2 <= 1'h0;
     end
     else begin 
       in0 <= in; 
