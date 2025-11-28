@@ -9,7 +9,7 @@ module AfeControl (
   output logic [7:0] pga_code_o,
   output logic set_pga_o,
   input pga_ready_i,
-  output reg hga_bypass_o,
+  output reg hga_active_o,
   output logic set_in_progress_o
 ); 
 
@@ -22,12 +22,12 @@ module AfeControl (
 
   // from the LUT
   wire [7:0] lut_pga_code; 
-  wire lut_hga_bypass;
+  wire lut_hga_active;
 
   // registers to hold the current configuration for the AFE (after LUT)
   reg [7:0] pga_code_reg;
   logic pga_code_reg_we;
-  logic hga_bypass_we;
+  logic hga_active_we;
 
   // state machine to control setting of gain
 
@@ -88,7 +88,7 @@ module AfeControl (
       end
       GAIN_EVAL__WRITE_SEQ_DETERMINE: begin 
         // HGA bypasses are the same, only PGA is set
-        if (lut_hga_bypass == hga_bypass_o) begin 
+        if (lut_hga_active == hga_active_o) begin 
           next_state = PGA_ONLY__SET;
         end
         // PGA gains are the same, only HGA is set
@@ -96,7 +96,7 @@ module AfeControl (
           next_state = HGA_ONLY__SET;
         end
         // HGA goes from bypasssed to active
-        else if (!hga_bypass_o && lut_hga_bypass) begin 
+        else if (!hga_active_o && lut_hga_active) begin 
           next_state = BOTH_INC__PGA_SET;
         end
         // HGA goes from active to bypassed
@@ -162,7 +162,7 @@ module AfeControl (
 
   // control signals determind by state
   always_comb begin 
-    hga_bypass_we = 1'h0; 
+    hga_active_we = 1'h0; 
     set_pga_o = 1'h0;
     set_in_progress_o = 1'h1;
     pga_code_reg_we = 1'h0;
@@ -177,20 +177,20 @@ module AfeControl (
         set_pga_o = 1'h1;
       end
       HGA_ONLY__SET: begin 
-        hga_bypass_we = 1'h1;
+        hga_active_we = 1'h1;
       end
       BOTH_DEC__SET: begin 
-        hga_bypass_we = 1'h1;
+        hga_active_we = 1'h1;
         set_pga_o = 1'h1;
       end
       BOTH_INC__PGA_SET: begin 
         set_pga_o = 1'h1;
       end
       BOTH_INC__HGA_SET: begin 
-        hga_bypass_we = 1'h1;
+        hga_active_we = 1'h1;
       end
       default: begin 
-        hga_bypass_we = 1'h0; 
+        hga_active_we = 1'h0; 
         set_pga_o = 1'h0;
         set_in_progress_o = 1'h1;
         pga_code_reg_we = 1'h0;
@@ -215,10 +215,10 @@ module AfeControl (
   // hga bypass register
   always_ff @(posedge clk, posedge rst) begin 
     if (rst) begin 
-      hga_bypass_o <= HGA_RSTVAL;
+      hga_active_o <= HGA_RSTVAL;
     end 
-    else if (hga_bypass_we) begin 
-      hga_bypass_o <= lut_hga_bypass;
+    else if (hga_active_we) begin 
+      hga_active_o <= lut_hga_active;
     end
   end
 
@@ -245,7 +245,7 @@ module AfeControl (
   GainLut gain_lut (
     .gain_dB_i(gain_dB_reg), 
     .pga_code_o(lut_pga_code), 
-    .hga_bypass_o(lut_hga_bypass)
+    .hga_active_o(lut_hga_active)
     );
 
 endmodule

@@ -49,7 +49,7 @@ module HardwareTest (
   wire pga_cs_n; 
   wire pga_sck; 
   // hga
-  wire hga_bypass;
+  wire hga_active;
   // ----- BTN -----
   wire [1:0] btn_debounced;
   // ----- LED -----
@@ -112,10 +112,10 @@ module HardwareTest (
   assign pio42 = pga_mosi; 
   assign pio44 = pga_cs_n; 
   assign pio46 = pga_sck; 
-  assign pio48 = hga_bypass;
+  assign pio48 = hga_active;
 
   assign led_ctrl = gain_dB[5:2];
-  assign led0_r_ctrl = ~hga_bypass;
+  assign led0_r_ctrl = hga_active;
   assign led0_g_ctrl = 1'h0; 
   assign led0_b_ctrl = 1'h0;
 
@@ -199,7 +199,7 @@ module HardwareTest (
     .pga_code_o(pga_code), 
     .set_pga_o(pga_set),
     .pga_ready_i(pga_ready), 
-    .hga_bypass_o(hga_bypass), 
+    .hga_active_o(hga_active), 
     .set_in_progress_o()
   );
   ManualControl manual_control (
