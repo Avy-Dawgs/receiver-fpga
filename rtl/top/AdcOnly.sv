@@ -13,11 +13,15 @@ module AdcOnly (
 
   output pio29,     // uart tx
 
+  output pio48,     // hga bypass
+
   output [3:0] led, 
   output led0_r, 
   output led0_g, 
   output led0_b
 ); 
+
+  assign pio48 = 1'h0;
 
 
   localparam real CLK_FREQ = 87.49091e6;
@@ -77,11 +81,12 @@ module AdcOnly (
 
   assign rst = 1'h0;
 
-  mmcm_core mmcm (
-    .clk_in1(clk),
-    .clk_out1(sck)
+  // mmcm  
+  mmcm mmcm_inst (
+    .sys_clk_i(clk),
+    .adc_sck(sck)
+    // .pga_sck()
   );
-
   adc_ila adc_ila_i (
     .clk(sck), // input wire clk
     // .trig_in(adc_valid),// input wire trig_in 
