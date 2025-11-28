@@ -12,7 +12,7 @@ module PgaInterface (
   input set_i, 
   output logic ready_o,
   output reg cs_n, 
-  output logic miso
+  output logic mosi
 ); 
 
   // cs_n clocked on falling edge 
@@ -110,7 +110,7 @@ module PgaInterface (
     end
   end
 
-  assign miso = shiftreg[7];
+  assign mosi = shiftreg[7];
   assign ready_o = !rst && (state == IDLE);
   assign last_bit = (bit_count == 'd7);
 

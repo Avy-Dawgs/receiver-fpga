@@ -26,9 +26,8 @@ module AfeControl (
 
   // registers to hold the current configuration for the AFE (after LUT)
   reg [7:0] pga_code_reg;
-  reg hga_bypass_reg;
   logic pga_code_reg_we;
-  logic hga_bypass_reg_we;
+  logic hga_bypass_we;
 
   // state machine to control setting of gain
 
@@ -89,7 +88,7 @@ module AfeControl (
       end
       GAIN_EVAL__WRITE_SEQ_DETERMINE: begin 
         // HGA bypasses are the same, only PGA is set
-        if (lut_hga_bypass == hga_bypass_reg) begin 
+        if (lut_hga_bypass == hga_bypass_o) begin 
           next_state = PGA_ONLY__SET;
         end
         // PGA gains are the same, only HGA is set
@@ -97,7 +96,7 @@ module AfeControl (
           next_state = HGA_ONLY__SET;
         end
         // HGA goes from bypasssed to active
-        else if (!hga_bypass_reg && lut_hga_bypass) begin 
+        else if (!hga_bypass_o && lut_hga_bypass) begin 
           next_state = BOTH_INC__PGA_SET;
         end
         // HGA goes from active to bypassed
@@ -163,11 +162,10 @@ module AfeControl (
 
   // control signals determind by state
   always_comb begin 
-    hga_bypass_reg_we = 1'h0; 
+    hga_bypass_we = 1'h0; 
     set_pga_o = 1'h0;
     set_in_progress_o = 1'h1;
     pga_code_reg_we = 1'h0;
-
     case (state) 
       IDLE: begin 
         set_in_progress_o = 1'h0;
@@ -179,17 +177,23 @@ module AfeControl (
         set_pga_o = 1'h1;
       end
       HGA_ONLY__SET: begin 
-        hga_bypass_reg_we = 1'h1;
+        hga_bypass_we = 1'h1;
       end
       BOTH_DEC__SET: begin 
-        hga_bypass_reg_we = 1'h1;
+        hga_bypass_we = 1'h1;
         set_pga_o = 1'h1;
       end
       BOTH_INC__PGA_SET: begin 
         set_pga_o = 1'h1;
       end
       BOTH_INC__HGA_SET: begin 
-        hga_bypass_reg_we = 1'h1;
+        hga_bypass_we = 1'h1;
+      end
+      default: begin 
+        hga_bypass_we = 1'h0; 
+        set_pga_o = 1'h0;
+        set_in_progress_o = 1'h1;
+        pga_code_reg_we = 1'h0;
       end
     endcase
   end
@@ -213,7 +217,7 @@ module AfeControl (
     if (rst) begin 
       hga_bypass_o <= HGA_RSTVAL;
     end 
-    else if (hga_bypass_reg_we) begin 
+    else if (hga_bypass_we) begin 
       hga_bypass_o <= lut_hga_bypass;
     end
   end
