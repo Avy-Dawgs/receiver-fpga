@@ -10,7 +10,7 @@ module tb_PgaInterface();
 
   wire ready_o; 
   wire cs_n; 
-  wire miso;
+  wire mosi;
 
   reg [7:0] sent_data;
 
@@ -41,7 +41,7 @@ module tb_PgaInterface();
 
     for (int i = 0; i < 8; i++) begin 
       @(posedge sck) begin
-        sent_data[7 - i] = miso;
+        sent_data[7 - i] = mosi;
       end
     end
     wait (ready_o == 1);
@@ -58,7 +58,7 @@ module tb_PgaInterface();
     .set_i(set_i), 
     .ready_o(ready_o),
     .cs_n(cs_n),
-    .miso(miso)
+    .mosi(mosi)
   );
   
 endmodule

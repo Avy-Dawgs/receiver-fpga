@@ -12,14 +12,14 @@
    </db_ref_list>
    <zoom_setting>
       <ZoomStartTime time="0.000 ns"></ZoomStartTime>
-      <ZoomEndTime time="56.901 ns"></ZoomEndTime>
-      <Cursor1Time time="44.000 ns"></Cursor1Time>
+      <ZoomEndTime time="75.901 ns"></ZoomEndTime>
+      <Cursor1Time time="35.100 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="182"></NameColumnWidth>
-      <ValueColumnWidth column_width="88"></ValueColumnWidth>
+      <ValueColumnWidth column_width="84"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="6" />
+   <WVObjectSize size="7" />
    <wvobject type="logic" fp_name="/tb_AdcInterface/sck">
       <obj_property name="ElementShortName">sck</obj_property>
       <obj_property name="ObjectShortName">sck</obj_property>
@@ -28,20 +28,24 @@
       <obj_property name="ElementShortName">rst</obj_property>
       <obj_property name="ObjectShortName">rst</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/tb_AdcInterface/mosi">
-      <obj_property name="ElementShortName">mosi</obj_property>
-      <obj_property name="ObjectShortName">mosi</obj_property>
-   </wvobject>
    <wvobject type="logic" fp_name="/tb_AdcInterface/cs_n">
       <obj_property name="ElementShortName">cs_n</obj_property>
       <obj_property name="ObjectShortName">cs_n</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/tb_AdcInterface/data_o">
-      <obj_property name="ElementShortName">data_o</obj_property>
-      <obj_property name="ObjectShortName">data_o</obj_property>
+   <wvobject type="array" fp_name="/tb_AdcInterface/data_o">
+      <obj_property name="ElementShortName">data_o[11:0]</obj_property>
+      <obj_property name="ObjectShortName">data_o[11:0]</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/tb_AdcInterface/valid_o">
       <obj_property name="ElementShortName">valid_o</obj_property>
       <obj_property name="ObjectShortName">valid_o</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_AdcInterface/dut/shiftreg">
+      <obj_property name="ElementShortName">shiftreg[11:0]</obj_property>
+      <obj_property name="ObjectShortName">shiftreg[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_AdcInterface/dut/falling_edge_count">
+      <obj_property name="ElementShortName">falling_edge_count[4:0]</obj_property>
+      <obj_property name="ObjectShortName">falling_edge_count[4:0]</obj_property>
    </wvobject>
 </wave_config>
