@@ -1,5 +1,6 @@
 import numpy as np
 from tabulate import tabulate
+from matplotlib import pyplot as plt
 
 def main(): 
 
@@ -33,6 +34,10 @@ def main():
     print(hex_codes)
 
     print(target_gains_dB)
+
+    plt.plot(codes, gains)
+    plt.plot(codes, gains_dB)
+    plt.show()
 
 def find_gain_matches(gains_dB, target_gains_dB): 
     idxs = np.zeros(len(target_gains_dB))
