@@ -18,7 +18,7 @@ module CmodS7Led #(
   output [3:0] led_o
 ); 
 
-  localparam CLK_CYC_PER_PWM_CYC = CLK_FREQ / PWM_FREQ;
+  localparam CLK_CYC_PER_PWM_CYC = int'(real'(CLK_FREQ) / real'(PWM_FREQ));
   localparam MAX_COUNT = CLK_CYC_PER_PWM_CYC  - 1;
   localparam CBITS = $clog2(MAX_COUNT);
 

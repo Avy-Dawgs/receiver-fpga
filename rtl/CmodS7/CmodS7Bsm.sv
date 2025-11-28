@@ -2,7 +2,8 @@
 * PWM of LEDs and debouncing of buttons.
 */
 module CmodS7Bsm #(
-  CLK_FREQ
+  CLK_FREQ, 
+  LED_PWM_FREQ
 ) (
   input clk, 
   input rst, 

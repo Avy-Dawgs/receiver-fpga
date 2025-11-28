@@ -8,7 +8,8 @@ module CmodS7Btn #(
 ); 
 
   localparam BTN_DW = 2; 
-  localparam EN_FREQ = 500;
+  localparam EN_FREQ = 1e3;    // milliseconds
+  localparam STEADY_STATE_EN_COUNT = 10;    // 10 milliseconds debounce
 
   wire en;
 
