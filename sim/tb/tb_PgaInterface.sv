@@ -31,7 +31,7 @@ module tb_PgaInterface();
     #T; 
     rst = 0;
 
-    #(T);
+    #(1.5*T);
 
     set_i = 1; 
 

@@ -15,9 +15,6 @@ module PgaInterface (
   output logic mosi
 ); 
 
-  // cs_n clocked on falling edge 
-  // shiftreg clockedo on rising edge
-  
   reg [7:0] shiftreg; 
   reg [2:0] bit_count;
 
@@ -25,7 +22,6 @@ module PgaInterface (
 
   typedef enum {
     IDLE,   // waiting for set_i
-    START,  // transfer posedge datareg to shiftreg, and pull cs_n low
     ACTIVE, // transfer bits
     WAIT    // to prevent setting again too soon
   } states_t;
@@ -34,7 +30,7 @@ module PgaInterface (
   logic [1:0] next_state; 
 
   // state transition
-  always_ff @(posedge sck, posedge rst) begin 
+  always_ff @(negedge sck, posedge rst) begin 
     if (rst) begin 
       state <= IDLE;
     end 
@@ -49,9 +45,6 @@ module PgaInterface (
       IDLE: begin 
         next_state = set_i ? ACTIVE : IDLE;
       end 
-      START: begin 
-        next_state = ACTIVE;
-      end
       ACTIVE: begin 
         next_state = ACTIVE; 
         if (last_bit) begin 
@@ -67,7 +60,7 @@ module PgaInterface (
     endcase
   end
 
-  always_ff @(posedge sck, posedge rst) begin 
+  always_ff @(negedge sck, posedge rst) begin 
     if (rst) begin 
       shiftreg <= 'h0;
     end 
@@ -82,7 +75,7 @@ module PgaInterface (
   end
 
   // bit count
-  always_ff @(posedge sck, posedge rst) begin 
+  always_ff @(negedge sck, posedge rst) begin 
     if (rst) begin 
       bit_count <= 'h0;
     end
@@ -101,10 +94,10 @@ module PgaInterface (
       cs_n <= 1'h1;
     end
     else begin 
-      if (state == WAIT) begin 
+      if (last_bit) begin 
         cs_n <= 1'h1;
       end
-      else if (state == ACTIVE) begin 
+      else if ((state == IDLE) && set_i) begin 
         cs_n <= 1'h0;
       end
     end
