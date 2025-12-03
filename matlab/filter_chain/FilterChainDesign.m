@@ -1,29 +1,30 @@
 clear;
 %% System params
 
-sysClkFreq = 52e6;
+sysClkFreq = 87.49091e6;
 
-FsIn = 1e6;   % scaled down by about 5
+FsIn = sysClkFreq/18; 
 % FsOut = 1e3;
-Fc = 91.4e3;    % scaled down by 5
-Fpass = 100;    % Hz
-Fstop = 250;    % Hz
-Ap = 0.1;       % dB?
-Ast = 60;       % dB?
+Fc = 457e3;  
+Fpass = 80;    % Hz
+Fstop = 500;    % Hz
+Ap = 0.1;       % dB
+Ast = 60;       % dB
 
 %% DC Block 
-dcBlockParams.filterOrder = 4;
-dcBlockParams.passbandRipple = 0.1; 
-dcBlockParams.stopbandAtten = 70; 
-dcBlockParams.normalizedBandwidth = 0.001;
+dcBlockParams.filterOrder = 2;
+% dcBlockParams.passbandRipple = 0.1; 
+% dcBlockParams.stopbandAtten = 70; 
+dcBlockParams.normalizedBandwidth = 0.01;
 
 dcBlockFilt = designHighpassIIR( ...
     "FilterOrder", dcBlockParams.filterOrder, ... 
-    "StopbandAttenuation", dcBlockParams.stopbandAtten, ...
+    ... "StopbandAttenuation", dcBlockParams.stopbandAtten, ...
     "SystemObject", true, ...
     "DesignMethod", "butter", ...
     "HalfPowerFrequency", dcBlockParams.normalizedBandwidth ...
-    );
+    ); 
+dcBlockFilt_df1 = dfilt.df1(dcBlockFilt.Numerator, dcBlockFilt.Denominator);
 filterAnalyzer(dcBlockFilt, FilterNames="dcBlock");
 
 %% CIC filter
@@ -81,8 +82,10 @@ filterAnalyzer(dsp.FilterCascade(cicFilt,cicGainCorr,cicCompFilt,hbFilt), Filter
 
 %% Final FIR 
 finalSpec = fdesign.decimator( ...
-    2,'lowpass', ...
-    'Fp,Fst,Ap,Ast',Fpass,Fstop,Ap,Ast+3,hbParams.FsOut ...
+    2, ...
+    'lowpass', ...
+    'Fp,Fst,Ap,Ast', ...
+    Fpass,Fstop,Ap,Ast+3,hbParams.FsOut ...
     );
 finalFilt = design(finalSpec,'equiripple','SystemObject',true);
 
