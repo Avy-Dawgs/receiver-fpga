@@ -9,7 +9,7 @@ module DataFramer #(
   input [8*NBYTES - 1:0] data_i,
   input valid_i, 
   input uart_fifo_full_i,
-  output logic [7:0] uart_data,
+  output logic [7:0] uart_data_o,
   output logic uart_wr_en_o
 ); 
 
@@ -101,13 +101,13 @@ module DataFramer #(
   always_comb begin 
     case (state) 
       WR_START: begin 
-        uart_data = START_BYTE;
+        uart_data_o = START_BYTE;
       end 
       WR_END: begin 
-        uart_data = END_BYTE; 
+        uart_data_o = END_BYTE; 
       end 
       default: begin 
-        uart_data = datareg[7:0];
+        uart_data_o = datareg[7:0];
       end
     endcase
   end
