@@ -6,8 +6,7 @@
 module Uart_async
 #(
   CLK_FREQ, 
-  BAUD = 115_200, 
-  FIFO_ADDR_BITS = 3
+  BAUD = 115_200
 )
 (
   input clk, 
