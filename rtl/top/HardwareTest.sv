@@ -28,7 +28,7 @@ module HardwareTest (
   localparam real ADC_SCK_FREQ = 87.49091e6;
   localparam real PGA_SCK_FREQ = 20e6;   // pga_sck
 
-  localparam real UART_BAUD = 115.2e3;
+  localparam real UART_BAUD = 460.8e3;
   localparam UART_FIFO_ABITS = 3;
 
   localparam LED_PWM_FREQ = 1000;
@@ -48,6 +48,7 @@ module HardwareTest (
   wire pga_mosi;
   wire pga_cs_n; 
   wire pga_sck; 
+  wire pga_sck_o;
   // hga
   wire hga_active;
   // ----- BTN -----
@@ -74,31 +75,10 @@ module HardwareTest (
   wire set_gain; 
   wire [7:0] gain_dB;
 
-  /**********************
-  * Sequaential 
-  * ********************/
-
-  localparam MAX_ADC_SAMPLE_COUNT = 2000;
-
-  reg [15:0] adc_sample_count;
-  logic max_adc_sample_count_reached;
-
-  always_ff @(posedge adc_sck, posedge rst) begin 
-    if (rst) begin 
-      adc_sample_count <= 'h0;
-    end 
-    else if (adc_valid) begin 
-      if (max_adc_sample_count_reached) begin 
-        adc_sample_count <= 'h0;
-      end
-      else begin
-        adc_sample_count <= adc_sample_count + 1'h1;
-      end
-    end
-  end
-
-  assign max_adc_sample_count_reached = (adc_sample_count == MAX_ADC_SAMPLE_COUNT);
-  assign uart_wr_en = adc_valid && max_adc_sample_count_reached;
+  // ----- filter chain ----- 
+  wire [31:0] filter_chain_data;
+  wire filter_chain_valid;
+  wire filter_chain_clk_en;
 
   /**************** 
   * ASSIGNMENTS 
@@ -111,7 +91,7 @@ module HardwareTest (
   assign pio29 = uart_tx; 
   assign pio42 = pga_mosi; 
   assign pio44 = pga_cs_n; 
-  assign pio46 = pga_sck; 
+  assign pio46 = pga_sck_o;   // **
   assign pio48 = hga_active;
 
   assign led_ctrl = gain_dB[5:2];
@@ -121,7 +101,7 @@ module HardwareTest (
 
   assign rst = 1'h0;
 
-  assign uart_data = adc_data[7:0];
+  assign filter_chain_clk_en = 1'h1;
 
   /**************** 
   * MODULES 
@@ -184,6 +164,7 @@ module HardwareTest (
   // pga interface 
   PgaInterface pga (
     .sck(pga_sck), 
+    .sck_o(pga_sck_o),
     .rst(rst), 
     .code_i(pga_code), 
     .set_i(pga_set), 
@@ -208,6 +189,28 @@ module HardwareTest (
     .btn_i(btn_debounced), 
     .gain_dB_o(gain_dB), 
     .set_gain_o(set_gain)
+  );
+  // filters 
+  FilterChainHDL filter_chain (
+    .clk(adc_sck), 
+    .rst(rst), 
+    .clk_en(filter_chain_clk_en), 
+    .data_i(adc_data), 
+    .valid_i(adc_valid), 
+    .ce_out(), 
+    .data_o(filter_chain_data), 
+    .valid_o(filter_chain_valid)
+  );
+  DataFramer #(
+    .NBYTES(4)
+  ) data_framer (
+    .clk(adc_sck), 
+    .rst(rst), 
+    .data_i(filter_chain_data), 
+    .valid_i(filter_chain_valid), 
+    .uart_fifo_full_i(uart_fifo_full), 
+    .uart_data_o(uart_data), 
+    .uart_wr_en_o(uart_wr_en)
   );
 
 endmodule

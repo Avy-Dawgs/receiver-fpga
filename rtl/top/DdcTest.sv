@@ -67,7 +67,7 @@ module DdcTest (
     .data_i(sigchain_data), 
     .valid_i(sigchain_valid), 
     .uart_fifo_full_i(uart_fifo_full),
-    .uart_data(uart_data), 
+    .uart_data_o(uart_data), 
     .uart_wr_en_o(uart_wr_en)
   );
 
