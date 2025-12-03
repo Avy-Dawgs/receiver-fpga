@@ -7,6 +7,7 @@
 */
 module PgaInterface (
   input sck,
+  output sck_o,
   input rst, 
   input [7:0] code_i, 
   input set_i, 
@@ -103,6 +104,7 @@ module PgaInterface (
     end
   end
 
+  assign sck_o = (state == ACTIVE) ? sck : 1'h0;
   assign mosi = shiftreg[7];
   assign ready_o = !rst && (state == IDLE);
   assign last_bit = (bit_count == 'd7);
