@@ -4,7 +4,7 @@ import numpy as np
 
 def main(): 
 
-    ser = serial.Serial("/dev/ttyUSB0", 115_200, 8) 
+    ser = serial.Serial("/dev/ttyUSB0", 460_800, 8) 
     c = 0
 
     vals = []
